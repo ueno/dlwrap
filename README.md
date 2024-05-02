@@ -42,14 +42,14 @@ Now proceed to generate helper files:
 ```console
 $ cargo run -- --input /usr/include/zstd.h \
          --output out \
-	     --loader zstdwrap \
-	     --function-regex "^ZSTD_(versionNumber|versionString)$" \
-		 --library-prefix zstdwrap \
-		 --symbol-prefix zstdwrap_sym \
-		 --function-prefix zstdwrap_func \
-		 --soname ZSTDWRAP_SONAME \
-		 --wrapper ZSTDWRAP_FUNC \
-		 --header=zstd.h
+         --loader zstdwrap \
+         --function-regex "^ZSTD_(versionNumber|versionString)$" \
+         --library-prefix zstdwrap \
+         --symbol-prefix zstdwrap_sym \
+         --function-prefix zstdwrap_func \
+         --soname ZSTDWRAP_SONAME \
+         --wrapper ZSTDWRAP_FUNC \
+         --header=zstd.h
 ```
 
 This command will create 3 files under `out/`: `zstdwrap.c`,
@@ -59,10 +59,10 @@ At this point the application can be compiled with:
 
 ```console
 $ gcc -pthread -I./out \
-	  -DZSTDWRAP_ENABLE_PTHREAD=1 \
-	  -DZSTDWRAP_ENABLE_DLOPEN=1 \
-	  -DZSTDWRAP_SONAME='"libzstd.so.1"' \
-	  -o zstdver examples/zstdver.c out/zstdwrap.c
+      -DZSTDWRAP_ENABLE_PTHREAD=1 \
+      -DZSTDWRAP_ENABLE_DLOPEN=1 \
+      -DZSTDWRAP_SONAME='"libzstd.so.1"' \
+      -o zstdver examples/zstdver.c out/zstdwrap.c
 ```
 
 `ZSTDWRAP_ENABLE_PTHREAD` controls whether the application is suppsed
