@@ -20,4 +20,6 @@
 
 #endif /* @ENABLE_DLOPEN@ */
 
+void @LIBRARY_PREFIX@_ensure_library (const char *soname);
+
 #endif /* @GUARD@ */

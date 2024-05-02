@@ -73,9 +73,15 @@ ensure_symbol (const char *name, void **symp)
 static void
 ensure_library (void)
 {
+  @LIBRARY_PREFIX@_ensure_library (@LIBRARY_SONAME@);
+}
+
+void
+@LIBRARY_PREFIX@_ensure_library (const char *soname)
+{
   if (!@LIBRARY_PREFIX@_dlhandle)
     {
-      @LIBRARY_PREFIX@_dlhandle = dlopen (@LIBRARY_SONAME@, RTLD_LAZY | RTLD_LOCAL);
+      @LIBRARY_PREFIX@_dlhandle = dlopen (soname, RTLD_LAZY | RTLD_LOCAL);
       if (!@LIBRARY_PREFIX@_dlhandle)
 	abort ();
     }
@@ -91,4 +97,12 @@ ensure_library (void)
 #undef ENSURE_SYMBOL
 }
 
-#endif /* @ENABLE_DLOPEN@ */
+#else /* @ENABLE_DLOPEN@ */
+
+void
+@LIBRARY_PREFIX@_ensure_library (const char *soname)
+{
+  (void) soname;
+}
+
+#endif /* !@ENABLE_DLOPEN@ */
