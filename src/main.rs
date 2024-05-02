@@ -167,7 +167,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let enable_pthread = format!("{}_ENABLE_PTHREAD", &cli.library_prefix.to_uppercase());
 
     let replacement = |caps: &Captures| match &caps[1] {
-        "" => "@@",
+        "" => "@",
         "SYMBOL_PREFIX" => &cli.symbol_prefix,
         "FUNCTION_PREFIX" => &cli.function_prefix,
         "FUNCTIONS_H" => &functions_h,
