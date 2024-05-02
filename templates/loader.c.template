@@ -1,10 +1,12 @@
 #include "@LOADER_H@"
 
+#if defined(@ENABLE_DLOPEN@) && @ENABLE_DLOPEN@
+
 #include <assert.h>
 #include <dlfcn.h>
 #include <stdlib.h>
 
-#ifdef @ENABLE_PTHREAD@
+#if defined(@ENABLE_PTHREAD@) && @ENABLE_PTHREAD@
 #include <pthread.h>
 
 static pthread_once_t dlopen_once = PTHREAD_ONCE_INIT;
@@ -88,3 +90,5 @@ ensure_library (void)
 #undef FUNC
 #undef ENSURE_SYMBOL
 }
+
+#endif /* @ENABLE_DLOPEN@ */

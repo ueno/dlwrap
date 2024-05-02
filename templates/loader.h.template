@@ -3,7 +3,7 @@
 
 @INCLUDES@
 
-#ifdef @ENABLE_DLOPEN@
+#if defined(@ENABLE_DLOPEN@) && @ENABLE_DLOPEN@
 
 #define FUNC(ret, name, args, cargs)		\
   ret @FUNCTION_PREFIX@_##name args;

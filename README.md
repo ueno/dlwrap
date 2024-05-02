@@ -1,18 +1,21 @@
 # dlwrap
 
-When creating an application that supports multiple backends
-(compression, config file formats, cryptography, etc.), it is
-sometimes undesirable to link all the supported libraries to the
-application, as it would add those libraries as a dependency of the
-application. This can be solved by deferring loading of the necessary
-library with `dlopen`.
+When creating an application that supports multiple backends (for
+compression, config file formats, cryptography, etc.), it is sometimes
+undesirable to link all supported libraries to the application, as it
+would add those libraries as a dependency of the application.
 
-`dlwrap` allows applications to easily implement such mechanism by
-creating common wrapper functions.
+This can be solved by deferring loading of the library with `dlopen`
+until the first time a function from the library is called. This
+mechanism is typically implemented through wrappers around the library
+functions, though defining the wrappers is cumbersome and error-prone.
+
+`dlwrap` makes it easily for an application to implement such
+mechanism.
 
 ## Usage
 
-Let's consider a hypothetical application that calls
+Let's consider a hypothetical application which calls
 `ZSTD_versionNumber` and `ZSTD_versionString` to retrieve the run-time
 version of the ZSTD library.
 
@@ -85,6 +88,28 @@ ZSTD_versionString: 1.5.6
 
 $ ltrace -e dlopen ./zstdver
 zstdver->dlopen("libzstd.so.1", 1)               = 0x13152c0
+ZSTD_versionNumber: 10506
+ZSTD_versionString: 1.5.6
++++ exited (status 0) +++
+```
+
+With `ZSTDWRAP_ENABLE_DLOPEN=0`, the same application code can be
+compiled with the standard linkage (i.e., `libzstd` is linked at build
+time):
+
+```console
+$ gcc -I./out \
+      -DZSTDWRAP_ENABLE_DLOPEN=0 \
+      -o zstdver examples/zstdver.c out/zstdwrap.c \
+      -lzstd
+
+$ ldd ./zstdver
+        linux-vdso.so.1 (0x00007ffcd43e4000)
+        libzstd.so.1 => /lib64/libzstd.so.1 (0x00007f7323269000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007f7323087000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f732334a000)
+
+$ ltrace -e dlopen ./zstdver
 ZSTD_versionNumber: 10506
 ZSTD_versionString: 1.5.6
 +++ exited (status 0) +++
