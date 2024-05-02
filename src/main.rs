@@ -103,7 +103,7 @@ fn write_functions(
                  macro_,
                  result_type.get_display_name(),
                  name,
-                 args.join(", "),
+                 if args.len() == 0 { "void".to_string() } else { args.join(", ") },
                  cargs.join(", "))?;
     }
 
