@@ -1,0 +1,90 @@
+#include "@LOADER_H@"
+
+#include <assert.h>
+#include <dlfcn.h>
+#include <stdlib.h>
+
+#ifdef @ENABLE_PTHREAD@
+#include <pthread.h>
+
+static pthread_once_t dlopen_once = PTHREAD_ONCE_INIT;
+
+#define ENSURE_LIBRARY pthread_once(&dlopen_once, ensure_library)
+
+#else
+
+#define ENSURE_LIBRARY do {	    \
+    if (!@LIBRARY_PREFIX@_dlhandle) \
+      ensure_library();		    \
+  } while (0)
+
+#endif
+
+static void *@LIBRARY_PREFIX@_dlhandle;
+
+static void ensure_library(void);
+
+/* Define redirection symbols */
+#if (2 <= __GNUC__ || (4 <= __clang_major__))
+#define FUNC(ret, name, args, cargs)			\
+  static __typeof__(name)(*@SYMBOL_PREFIX@_##name);
+#else
+#define FUNC(ret, name, args, cargs)		\
+  static ret(*@SYMBOL_PREFIX@_##name)args;
+#endif
+#define VOID_FUNC FUNC
+#include "@FUNCTIONS_H@"
+#undef VOID_FUNC
+#undef FUNC
+
+/* Define redirection wrapper functions */
+#define FUNC(ret, name, args, cargs)        \
+ret @FUNCTION_PREFIX@_##name args           \
+{					    \
+  ENSURE_LIBRARY;			    \
+  assert (@SYMBOL_PREFIX@_##name);	    \
+  return @SYMBOL_PREFIX@_##name cargs;	    \
+}
+#define VOID_FUNC(ret, name, args, cargs)   \
+ret @FUNCTION_PREFIX@_##name args           \
+{					    \
+  ENSURE_LIBRARY;			    \
+  assert (@SYMBOL_PREFIX@_##name);	    \
+  @SYMBOL_PREFIX@_##name cargs;		    \
+}
+#include "@FUNCTIONS_H@"
+#undef VOID_FUNC
+#undef FUNC
+
+static void
+ensure_symbol (const char *name, void **symp)
+{
+  if (!*symp)
+    {
+      void *sym = dlsym(@LIBRARY_PREFIX@_dlhandle, name);
+      if (!sym)
+	abort ();
+      *symp = sym;
+    }
+}
+
+static void
+ensure_library (void)
+{
+  if (!@LIBRARY_PREFIX@_dlhandle)
+    {
+      @LIBRARY_PREFIX@_dlhandle = dlopen (@LIBRARY_SONAME@, RTLD_LAZY | RTLD_LOCAL);
+      if (!@LIBRARY_PREFIX@_dlhandle)
+	abort ();
+    }
+
+#define ENSURE_SYMBOL(name)					\
+  ensure_symbol(#name, (void **)&@SYMBOL_PREFIX@_##name)
+#define FUNC(ret, name, args, cargs)		\
+  ENSURE_SYMBOL(name);
+#define VOID_FUNC FUNC
+#include "@FUNCTIONS_H@"
+#undef VOID_FUNC
+#undef FUNC
+#undef ENSURE_SYMBOL
+}

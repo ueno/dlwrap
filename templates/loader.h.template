@@ -1,0 +1,23 @@
+#ifndef @GUARD@
+#define @GUARD@
+
+@INCLUDES@
+
+#ifdef @ENABLE_DLOPEN@
+
+#define FUNC(ret, name, args, cargs)		\
+  ret @FUNCTION_PREFIX@_##name args;
+#define VOID_FUNC FUNC
+#include "@FUNCTIONS_H@"
+#undef VOID_FUNC
+#undef FUNC
+
+#define @WRAPPER@(name) @FUNCTION_PREFIX@_##name
+
+#else
+
+#define @WRAPPER@(name) name
+
+#endif /* @ENABLE_DLOPEN@ */
+
+#endif /* @GUARD@ */
