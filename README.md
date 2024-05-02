@@ -2,9 +2,10 @@
 
 When creating an application that supports multiple backends
 (compression, config file formats, cryptography, etc.), it is
-sometimes undesirable to link all the supported libraries at build
-time to the application. This can be resolved by deferring loading of
-the necessary library to the run-time with `dlopen`.
+sometimes undesirable to link all the supported libraries to the
+application, as it would add those libraries as a dependency of the
+application. This can be solved by deferring loading of the necessary
+library with `dlopen`.
 
 `dlwrap` allows applications to easily implement such mechanism by
 creating common wrapper functions.
@@ -34,7 +35,7 @@ main (void)
 
 A couple of things to note:
 
-- Instead of the standard `<zstd.h>`, `"zstdloader.h"` is included
+- Instead of the standard `<zstd.h>` header, `"zstdwrap.h"` is included
 - Function symbols are wrapped with the `ZSTDWRAP_FUNC` macro
 
 Now proceed to generate helper files:
