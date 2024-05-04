@@ -5,7 +5,8 @@
 int
 main (void)
 {
-#ifndef ZSTDWRAP_SONAME
+#if defined(ZSTDWRAP_ENABLE_DLOPEN) && ZSTDWRAP_ENABLE_DLOPEN && \
+  !defined(ZSTDWRAP_SONAME)
   const char *soname = getenv ("ZSTDWRAP_SONAME");
   if (!soname)
     abort();
