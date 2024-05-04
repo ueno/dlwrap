@@ -20,6 +20,10 @@ struct Cli {
     #[arg(short, long)]
     output: PathBuf,
 
+    /// Resource directory to clang
+    #[arg(long)]
+    clang_resource_dir: Option<PathBuf>,
+
     /// Pattern to match function name
     #[arg(long)]
     function_regex: Option<Regex>,
@@ -68,6 +72,7 @@ const LOADER_H_TEMPLATE: &str = include_str!(concat!(
 fn write_functions(
     input: impl AsRef<Path>,
     output: impl AsRef<Path>,
+    clang_resource_dir: &Option<PathBuf>,
     patterns: &[Regex],
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut functions = fs::OpenOptions::new()
@@ -78,7 +83,11 @@ fn write_functions(
 
     let clang = Clang::new()?;
     let index = Index::new(&clang, false, false);
-    let tu = index.parser(input.as_ref()).parse()?;
+    let mut parser = index.parser(input.as_ref());
+    if let Some(resource_dir) = clang_resource_dir {
+        parser.arguments(&["-resource-dir", resource_dir.to_str().unwrap()]);
+    }
+    let tu = parser.parse()?;
     let funcs = tu
         .get_entity()
         .get_children()
@@ -201,7 +210,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let loader_h_content = re.replace_all(LOADER_H_TEMPLATE, replacement);
     loader_h.write_all(loader_h_content.into_owned().as_bytes())?;
 
-    write_functions(&cli.input, &cli.output.join(&functions_h), &patterns)?;
+    write_functions(
+        &cli.input,
+        &cli.output.join(&functions_h),
+        &cli.clang_resource_dir,
+        &patterns,
+    )?;
 
     Ok(())
 }

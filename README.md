@@ -46,6 +46,7 @@ Now proceed to generate helper files:
 ```console
 $ cargo run -- --input /usr/include/zstd.h \
          --output out \
+		 --clang-resource-dir "$(clang -print-resource-dir)" \
          --loader zstdwrap \
          --function-regex "^ZSTD_(versionNumber|versionString)$" \
          --library-prefix zstdwrap \
