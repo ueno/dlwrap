@@ -1,12 +1,14 @@
 # dlwrap
 
 When creating an application that supports multiple backends (for
-compression, config file formats, cryptography, etc.), it is sometimes
-undesirable to link all supported libraries to the application, as it
-would add those libraries as a dependency of the application.
+[compression][use-case-compression],
+[cryptography][use-case-cryptography], etc.), it is sometimes
+undesirable to link all supported libraries to the application at
+once, as it would add those libraries as a dependency of the
+application package.
 
 This can be solved by deferring loading of the library with `dlopen`
-until the first time a function from the library is called. This
+until the first time a function from the library is called. Such
 mechanism is typically implemented through wrappers around the library
 functions, though defining the wrappers is cumbersome and error-prone.
 
@@ -64,15 +66,31 @@ At this point the application can be compiled with:
 
 ```console
 $ gcc -pthread -I./out \
-      -DZSTDWRAP_ENABLE_PTHREAD=1 \
       -DZSTDWRAP_ENABLE_DLOPEN=1 \
       -DZSTDWRAP_SONAME='"libzstd.so.1"' \
+      -DZSTDWRAP_ENABLE_PTHREAD=1 \
       -o zstdver examples/zstdver.c out/zstdwrap.c
 ```
 
-`ZSTDWRAP_ENABLE_PTHREAD` controls whether the application is suppsed
-to be thread safe; in that case `pthread_once` is used to protect
-library loading and symbol resolution.
+The generated code provides a couple of configuration macros:
+
+- `<LIBRARY_PREFIX>_ENABLE_DLOPEN` controls whether to enable this
+  `dlopen` mechanism at all. If it is undefined or 0, the application
+  needs to be linked to the required library at build time (see
+  below). This is useful when conditionalizing builds based on
+  platforms where `dlopen` is supported or not.
+
+- `<LIBRARY_PREFIX>_SONAME` specifies the first argument to
+  `dlopen`. If it is undefined, no library is loaded automatically and
+  the application needs to call `<library_prefix>_ensure_library`
+  function, which takes the library SONAME as the first argument. This
+  is useful when the application determines the actual library at run
+  time.
+
+- `<LIBRARY_PREFIX>_ENABLE_PTHREAD` controls whether the automatic
+  library loading is supposed to be thread safe; in that case
+  `pthread_once` is used to protect library loading and symbol
+  resolution.
 
 When inspecting the `zstdver` executable with `ldd`, you will see
 `libzstd.so.1` is not linked, but it works as if it is:
@@ -119,3 +137,6 @@ ZSTD_versionString: 1.5.6
 ## License
 
 Apache-2.0
+
+[use-case-compression]: https://gitlab.com/gnutls/gnutls/-/issues/1424
+[use-case-cryptography]: https://github.com/open-quantum-safe/liboqs/pull/1603
