@@ -107,7 +107,7 @@ fn write_functions(
             .into_iter()
             .map(|arg| {
                 let type_ = arg.get_type().unwrap().get_display_name();
-                let delim = if type_.ends_with("*") { "" } else { " " };
+                let delim = if type_.ends_with('*') { "" } else { " " };
                 format!("{}{}{}", type_, delim, arg.get_display_name().unwrap())
             })
             .collect::<Vec<_>>();
@@ -115,7 +115,7 @@ fn write_functions(
             .get_arguments()
             .unwrap()
             .into_iter()
-            .map(|arg| format!("{}", arg.get_display_name().unwrap()))
+            .map(|arg| arg.get_display_name().unwrap().to_string())
             .collect::<Vec<_>>();
         let macro_ = if result_type.get_kind() == TypeKind::Void {
             "VOID_FUNC"
@@ -128,7 +128,7 @@ fn write_functions(
             macro_,
             result_type.get_display_name(),
             name,
-            if args.len() == 0 {
+            if args.is_empty() {
                 "void".to_string()
             } else {
                 args.join(", ")
@@ -153,7 +153,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(ref path) = cli.function_list {
         let mut function_list = String::from_utf8_lossy(&fs::read(path)?)
-            .split("\n")
+            .split('\n')
             .map(|line| Regex::new(&regex::escape(line)).map_err(Into::into))
             .collect::<Result<Vec<_>>>()?;
         patterns.append(&mut function_list);
@@ -196,7 +196,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .write(true)
         .create(true)
         .truncate(true)
-        .open(&cli.output.join(format!("{}.c", &cli.loader)))?;
+        .open(cli.output.join(&cli.loader).with_extension("c"))?;
 
     let loader_c_content = re.replace_all(LOADER_C_TEMPLATE, replacement);
     loader_c.write_all(loader_c_content.into_owned().as_bytes())?;
@@ -205,7 +205,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .write(true)
         .create(true)
         .truncate(true)
-        .open(&cli.output.join(format!("{}.h", &cli.loader)))?;
+        .open(cli.output.join(&cli.loader).with_extension("h"))?;
 
     let loader_h_content = re.replace_all(LOADER_H_TEMPLATE, replacement);
     loader_h.write_all(loader_h_content.into_owned().as_bytes())?;
