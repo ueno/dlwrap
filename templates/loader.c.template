@@ -6,13 +6,17 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 
-/* If @LIBRARY_SONAME@, dlopen handle can be automatically set;
- * otherwise, the caller needs to call @LIBRARY_PREFIX@_ensure_library
- * with soname determined at run time.
+/* If @LIBRARY_SONAME@ is defined, dlopen handle can be automatically
+ * set; otherwise, the caller needs to call
+ * @LIBRARY_PREFIX@_ensure_library with soname determined at run time.
  */
 #ifdef @LIBRARY_SONAME@
 
-static void ensure_library(void);
+static void
+ensure_library (void)
+{
+  @LIBRARY_PREFIX@_ensure_library (@LIBRARY_SONAME@);
+}
 
 #if defined(@ENABLE_PTHREAD@) && @ENABLE_PTHREAD@
 #include <pthread.h>
@@ -27,8 +31,6 @@ static pthread_once_t dlopen_once = PTHREAD_ONCE_INIT;
     if (!@LIBRARY_PREFIX@_dlhandle) \
       ensure_library();		    \
   } while (0)
-
-#endif
 
 #endif /* !@ENABLE_PTHREAD@ */
 
@@ -82,12 +84,6 @@ ensure_symbol (const char *name, void **symp)
 	abort ();
       *symp = sym;
     }
-}
-
-static void
-ensure_library (void)
-{
-  @LIBRARY_PREFIX@_ensure_library (@LIBRARY_SONAME@);
 }
 
 void
