@@ -4,8 +4,7 @@ When creating an application that supports multiple backends (for
 [compression][use-case-compression],
 [cryptography][use-case-cryptography], etc.), it is sometimes
 undesirable to link all supported libraries to the application at
-once, as it would add those libraries as a dependency of the
-application package.
+once.
 
 This can be solved by deferring loading of the library with `dlopen`
 until the first time a function from the library is called. Such
