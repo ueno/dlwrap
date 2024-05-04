@@ -1,0 +1,69 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  static:
+    name: Static code checks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+
+  build:
+    name: Fedora tests
+    runs-on: ubuntu-latest
+    container:
+      image: registry.fedoraproject.org/fedora:40
+      options: --privileged
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: dnf install -y cargo clang-devel clippy gcc libzstd-devel ltrace rustfmt
+    - name: Build
+      run: cargo build --verbose
+    - name: Generate code
+      run: |
+        cargo run -- --input /usr/include/zstd.h \
+                     --output out \
+                     --clang-resource-dir "$(clang -print-resource-dir)" \
+                     --loader zstdwrap \
+                     --function-regex "^ZSTD_(versionNumber|versionString)$" \
+                     --library-prefix zstdwrap \
+                     --symbol-prefix zstdwrap_sym \
+                     --function-prefix zstdwrap_func \
+                     --soname ZSTDWRAP_SONAME \
+                     --wrapper ZSTDWRAP_FUNC \
+                     --header=zstd.h
+    - name: Compile code (with pthread)
+      run: |
+        gcc -pthread -I./out \
+            -DZSTDWRAP_ENABLE_DLOPEN=1 \
+            -DZSTDWRAP_SONAME='"libzstd.so.1"' \
+            -DZSTDWRAP_ENABLE_PTHREAD=1 \
+            -o zstdver examples/zstdver.c out/zstdwrap.c
+        { ldd zstdver | grep libzstd; } && exit 1
+        ./zstdver
+    - name: Compile code (without pthread)
+      run: |
+        gcc -I./out \
+             -DZSTDWRAP_ENABLE_DLOPEN=1 \
+             -DZSTDWRAP_SONAME='"libzstd.so.1"' \
+             -o zstdver examples/zstdver.c out/zstdwrap.c
+        { ldd zstdver | grep libzstd; } && exit 1
+        ./zstdver
+    - name: Compile code (without dlopen)
+      run: |
+        gcc -I./out -o zstdver examples/zstdver.c out/zstdwrap.c -lzstd
+        { ldd zstdver | grep libzstd; } || exit 1
+        ./zstdver
+    - name: Run clippy
+      run: cargo clippy
