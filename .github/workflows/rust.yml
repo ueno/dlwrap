@@ -60,6 +60,14 @@ jobs:
              -o zstdver examples/zstdver.c out/zstdwrap.c
         { ldd zstdver | grep libzstd; } && exit 1
         ./zstdver
+    - name: Compile code (soname from envvar)
+      run: |
+        gcc -pthread -I./out \
+            -DZSTDWRAP_ENABLE_DLOPEN=1 \
+            -DZSTDWRAP_ENABLE_PTHREAD=1 \
+            -o zstdver examples/zstdver.c out/zstdwrap.c
+        { ldd zstdver | grep libzstd; } && exit 1
+        ZSTDWRAP_SONAME=libzstd.so.1 ./zstdver
     - name: Compile code (without dlopen)
       run: |
         gcc -I./out -o zstdver examples/zstdver.c out/zstdwrap.c -lzstd
