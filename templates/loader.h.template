@@ -20,6 +20,9 @@
 
 #endif /* @ENABLE_DLOPEN@ */
 
-void @LIBRARY_PREFIX@_ensure_library (const char *soname);
+/* Ensure SONAME to be loaded and all the necessary symbols are resolved.
+ * Returns 0 on success; negative error code otherwise.
+ */
+int @LIBRARY_PREFIX@_ensure_library (const char *soname);
 
 #endif /* @GUARD@ */

@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <dlfcn.h>
+#include <errno.h>
 #include <stdlib.h>
 
 /* If @LIBRARY_SONAME@ is defined, dlopen handle can be automatically
@@ -15,7 +16,8 @@
 static void
 ensure_library (void)
 {
-  @LIBRARY_PREFIX@_ensure_library (@LIBRARY_SONAME@);
+  if (@LIBRARY_PREFIX@_ensure_library (@LIBRARY_SONAME@) < 0)
+    abort ();
 }
 
 #if defined(@ENABLE_PTHREAD@) && @ENABLE_PTHREAD@
@@ -74,45 +76,49 @@ ret @FUNCTION_PREFIX@_##name args           \
 #undef VOID_FUNC
 #undef FUNC
 
-static void
+static int
 ensure_symbol (const char *name, void **symp)
 {
   if (!*symp)
     {
-      void *sym = dlsym(@LIBRARY_PREFIX@_dlhandle, name);
+      void *sym = dlsym (@LIBRARY_PREFIX@_dlhandle, name);
       if (!sym)
-	abort ();
+	return -errno;
       *symp = sym;
     }
 }
 
-void
+int
 @LIBRARY_PREFIX@_ensure_library (const char *soname)
 {
   if (!@LIBRARY_PREFIX@_dlhandle)
     {
       @LIBRARY_PREFIX@_dlhandle = dlopen (soname, RTLD_LAZY | RTLD_LOCAL);
       if (!@LIBRARY_PREFIX@_dlhandle)
-	abort ();
+	return -errno;
     }
 
 #define ENSURE_SYMBOL(name)					\
   ensure_symbol(#name, (void **)&@SYMBOL_PREFIX@_##name)
 #define FUNC(ret, name, args, cargs)		\
-  ENSURE_SYMBOL(name);
+  int err = ENSURE_SYMBOL(name);		\
+  if (err < 0)					\
+    return err;
 #define VOID_FUNC FUNC
 #include "@FUNCTIONS_H@"
 #undef VOID_FUNC
 #undef FUNC
 #undef ENSURE_SYMBOL
+  return 0;
 }
 
 #else /* @ENABLE_DLOPEN@ */
 
-void
+int
 @LIBRARY_PREFIX@_ensure_library (const char *soname)
 {
   (void) soname;
+  return 0;
 }
 
 #endif /* !@ENABLE_DLOPEN@ */
