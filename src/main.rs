@@ -73,6 +73,7 @@ fn write_functions(
     let mut functions = fs::OpenOptions::new()
         .write(true)
         .create(true)
+        .truncate(true)
         .open(output.as_ref())?;
 
     let clang = Clang::new()?;
@@ -185,6 +186,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut loader_c = fs::OpenOptions::new()
         .write(true)
         .create(true)
+        .truncate(true)
         .open(&cli.output.join(format!("{}.c", &cli.loader)))?;
 
     let loader_c_content = re.replace_all(LOADER_C_TEMPLATE, replacement);
@@ -193,6 +195,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut loader_h = fs::OpenOptions::new()
         .write(true)
         .create(true)
+        .truncate(true)
         .open(&cli.output.join(format!("{}.h", &cli.loader)))?;
 
     let loader_h_content = re.replace_all(LOADER_H_TEMPLATE, replacement);
