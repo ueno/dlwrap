@@ -50,11 +50,7 @@ $ cargo run -- --input /usr/include/zstd.h \
          --clang-resource-dir "$(clang -print-resource-dir)" \
          --loader zstdwrap \
          --function-regex "^ZSTD_(versionNumber|versionString)$" \
-         --library-prefix zstdwrap \
-         --symbol-prefix zstdwrap_sym \
-         --function-prefix zstdwrap_func \
-         --soname ZSTDWRAP_SONAME \
-         --wrapper ZSTDWRAP_FUNC \
+         --prefix zstdwrap \
          --header=zstd.h
 ```
 

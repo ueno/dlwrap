@@ -38,23 +38,23 @@ struct Cli {
 
     /// Library prefix
     #[arg(long)]
-    library_prefix: String,
+    prefix: String,
 
     /// Symbol prefix
     #[arg(long)]
-    symbol_prefix: String,
+    symbol_prefix: Option<String>,
 
     /// Function prefix
     #[arg(long)]
-    function_prefix: String,
+    function_prefix: Option<String>,
 
     /// Library soname
     #[arg(long)]
-    soname: String,
+    soname: Option<String>,
 
     /// Name of the wrapper macro
     #[arg(long)]
-    wrapper: String,
+    wrapper: Option<String>,
 
     #[arg(long)]
     header: Vec<String>,
@@ -141,7 +141,7 @@ fn write_functions(
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
 
     fs::create_dir_all(&cli.output)?;
 
@@ -173,19 +173,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .to_uppercase()
         .replace(|c: char| !(c.is_ascii_alphanumeric() || c == '_'), "_");
     let guard = format!("{}_H_", &loader_uppercase);
-    let enable_dlopen = format!("{}_ENABLE_DLOPEN", &cli.library_prefix.to_uppercase());
-    let enable_pthread = format!("{}_ENABLE_PTHREAD", &cli.library_prefix.to_uppercase());
+    let enable_dlopen = format!("{}_ENABLE_DLOPEN", &cli.prefix.to_uppercase());
+    let enable_pthread = format!("{}_ENABLE_PTHREAD", &cli.prefix.to_uppercase());
+    let symbol_prefix = cli
+        .symbol_prefix
+        .take()
+        .unwrap_or_else(|| format!("{}_sym", &cli.prefix));
+
+    let function_prefix = cli
+        .function_prefix
+        .take()
+        .unwrap_or_else(|| format!("{}_func", &cli.prefix));
+
+    let soname = cli
+        .soname
+        .take()
+        .unwrap_or_else(|| format!("{}_SONAME", &cli.prefix.to_uppercase()));
+
+    let wrapper = cli
+        .wrapper
+        .take()
+        .unwrap_or_else(|| format!("{}_FUNC", &cli.prefix.to_uppercase()));
 
     let replacement = |caps: &Captures| match &caps[1] {
         "" => "@",
-        "SYMBOL_PREFIX" => &cli.symbol_prefix,
-        "FUNCTION_PREFIX" => &cli.function_prefix,
+        "LIBRARY_PREFIX" => &cli.prefix,
+        "SYMBOL_PREFIX" => &symbol_prefix,
+        "FUNCTION_PREFIX" => &function_prefix,
         "FUNCTIONS_H" => &functions_h,
-        "LIBRARY_SONAME" => &cli.soname,
-        "WRAPPER" => &cli.wrapper,
+        "LIBRARY_SONAME" => &soname,
+        "WRAPPER" => &wrapper,
         "ENABLE_DLOPEN" => &enable_dlopen,
         "ENABLE_PTHREAD" => &enable_pthread,
-        "LIBRARY_PREFIX" => &cli.library_prefix,
         "INCLUDES" => &includes,
         "LOADER_H" => &loader_h,
         "GUARD" => &guard,
