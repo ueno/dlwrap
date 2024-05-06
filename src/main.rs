@@ -4,6 +4,7 @@ use anyhow::Result;
 use clang::*;
 use clap::Parser;
 use regex::{Captures, Regex};
+use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -18,7 +19,7 @@ struct Cli {
 
     /// Path to output directory
     #[arg(short, long)]
-    output: PathBuf,
+    output: Option<PathBuf>,
 
     /// Resource directory to clang
     #[arg(long)]
@@ -143,7 +144,12 @@ fn write_functions(
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut cli = Cli::parse();
 
-    fs::create_dir_all(&cli.output)?;
+    let output_dir = match cli.output {
+        Some(output) => output,
+        None => env::current_dir()?,
+    };
+
+    fs::create_dir_all(&output_dir)?;
 
     let mut patterns = vec![];
 
@@ -160,6 +166,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let re = Regex::new("@(.*?)@")?;
+
     let includes = cli
         .header
         .iter()
@@ -175,15 +182,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let guard = format!("{}_H_", &loader_uppercase);
     let enable_dlopen = format!("{}_ENABLE_DLOPEN", &cli.prefix.to_uppercase());
     let enable_pthread = format!("{}_ENABLE_PTHREAD", &cli.prefix.to_uppercase());
+
     let symbol_prefix = cli
         .symbol_prefix
         .take()
-        .unwrap_or_else(|| format!("{}_sym", &cli.prefix));
+        .unwrap_or_else(|| format!("{}_sym", &cli.prefix.to_lowercase()));
 
     let function_prefix = cli
         .function_prefix
         .take()
-        .unwrap_or_else(|| format!("{}_func", &cli.prefix));
+        .unwrap_or_else(|| format!("{}_func", &cli.prefix.to_lowercase()));
 
     let soname = cli
         .soname
@@ -215,7 +223,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .write(true)
         .create(true)
         .truncate(true)
-        .open(cli.output.join(&cli.loader).with_extension("c"))?;
+        .open(output_dir.join(&cli.loader).with_extension("c"))?;
 
     let loader_c_content = re.replace_all(LOADER_C_TEMPLATE, replacement);
     loader_c.write_all(loader_c_content.into_owned().as_bytes())?;
@@ -224,14 +232,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .write(true)
         .create(true)
         .truncate(true)
-        .open(cli.output.join(&cli.loader).with_extension("h"))?;
+        .open(output_dir.join(&cli.loader).with_extension("h"))?;
 
     let loader_h_content = re.replace_all(LOADER_H_TEMPLATE, replacement);
     loader_h.write_all(loader_h_content.into_owned().as_bytes())?;
 
     write_functions(
         &cli.input,
-        &cli.output.join(&functions_h),
+        &output_dir.join(&functions_h),
         &cli.clang_resource_dir,
         &patterns,
     )?;
