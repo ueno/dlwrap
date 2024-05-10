@@ -19,23 +19,23 @@ struct Cli {
 
     /// Path to output directory
     #[arg(short, long)]
-    output: Option<PathBuf>,
+    output_dir: Option<PathBuf>,
 
     /// Resource directory to clang
     #[arg(long)]
     clang_resource_dir: Option<PathBuf>,
 
-    /// Pattern to match function name
+    /// Pattern to match symbol
     #[arg(long)]
-    function_regex: Option<Regex>,
+    symbol_regex: Option<Regex>,
 
-    /// File listing matching functions
+    /// File listing symbol names
     #[arg(short, long)]
-    function_list: Option<PathBuf>,
+    symbol_list: Option<PathBuf>,
 
     /// Basename of the loader module
-    #[arg(long, default_value = "loader")]
-    loader: String,
+    #[arg(long)]
+    loader_basename: String,
 
     /// Library prefix
     #[arg(long)]
@@ -49,16 +49,17 @@ struct Cli {
     #[arg(long)]
     function_prefix: Option<String>,
 
-    /// Library soname
+    /// Name of the library soname macro
     #[arg(long)]
     soname: Option<String>,
 
-    /// Name of the wrapper macro
+    /// Name of the function wrapper macro
     #[arg(long)]
-    wrapper: Option<String>,
+    function_wrapper: Option<String>,
 
+    /// Additional header files to include
     #[arg(long)]
-    header: Vec<String>,
+    include: Vec<String>,
 }
 
 const LOADER_C_TEMPLATE: &str = include_str!(concat!(
@@ -144,8 +145,8 @@ fn write_functions(
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut cli = Cli::parse();
 
-    let output_dir = match cli.output {
-        Some(output) => output,
+    let output_dir = match cli.output_dir {
+        Some(output_dir) => output_dir,
         None => env::current_dir()?,
     };
 
@@ -153,11 +154,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut patterns = vec![];
 
-    if let Some(ref regex) = cli.function_regex {
+    if let Some(ref regex) = cli.symbol_regex {
         patterns.push(regex.clone());
     }
 
-    if let Some(ref path) = cli.function_list {
+    if let Some(ref path) = cli.symbol_list {
         let mut function_list = String::from_utf8_lossy(&fs::read(path)?)
             .split('\n')
             .map(|line| Regex::new(&regex::escape(line)).map_err(Into::into))
@@ -165,21 +166,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         patterns.append(&mut function_list);
     }
 
+    let loader_c_path = output_dir.join(&cli.loader_basename).with_extension("c");
+    let loader_h_path = output_dir.join(&cli.loader_basename).with_extension("h");
+
     let re = Regex::new("@(.*?)@")?;
 
     let includes = cli
-        .header
+        .include
         .iter()
-        .map(|h| format!("#include <{}>", h))
+        .map(|h| format!("#include {}", h))
         .collect::<Vec<_>>()
         .join("\n");
-    let loader_h = format!("{}.h", &cli.loader);
-    let functions_h = format!("{}funcs.h", &cli.loader);
-    let loader_uppercase = cli
-        .loader
-        .to_uppercase()
-        .replace(|c: char| !(c.is_ascii_alphanumeric() || c == '_'), "_");
-    let guard = format!("{}_H_", &loader_uppercase);
+    let functions_h = format!("{}funcs.h", &cli.loader_basename);
+    let loader_h_file_name = loader_h_path.file_name().and_then(|f| f.to_str()).unwrap();
+    let loader_h_guard = format!(
+        "{}_",
+        loader_h_file_name
+            .to_uppercase()
+            .replace(|c: char| !(c.is_ascii_alphanumeric() || c == '_'), "_"),
+    );
     let enable_dlopen = format!("{}_ENABLE_DLOPEN", &cli.prefix.to_uppercase());
     let enable_pthread = format!("{}_ENABLE_PTHREAD", &cli.prefix.to_uppercase());
 
@@ -198,8 +203,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .take()
         .unwrap_or_else(|| format!("{}_SONAME", &cli.prefix.to_uppercase()));
 
-    let wrapper = cli
-        .wrapper
+    let function_wrapper = cli
+        .function_wrapper
         .take()
         .unwrap_or_else(|| format!("{}_FUNC", &cli.prefix.to_uppercase()));
 
@@ -210,12 +215,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "FUNCTION_PREFIX" => &function_prefix,
         "FUNCTIONS_H" => &functions_h,
         "LIBRARY_SONAME" => &soname,
-        "WRAPPER" => &wrapper,
+        "WRAPPER" => &function_wrapper,
         "ENABLE_DLOPEN" => &enable_dlopen,
         "ENABLE_PTHREAD" => &enable_pthread,
         "INCLUDES" => &includes,
-        "LOADER_H" => &loader_h,
-        "GUARD" => &guard,
+        "LOADER_H" => &loader_h_file_name,
+        "LOADER_H_GUARD" => &loader_h_guard,
         _ => unreachable!(),
     };
 
@@ -223,7 +228,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .write(true)
         .create(true)
         .truncate(true)
-        .open(output_dir.join(&cli.loader).with_extension("c"))?;
+        .open(&loader_c_path)?;
 
     let loader_c_content = re.replace_all(LOADER_C_TEMPLATE, replacement);
     loader_c.write_all(loader_c_content.into_owned().as_bytes())?;
@@ -232,7 +237,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .write(true)
         .create(true)
         .truncate(true)
-        .open(output_dir.join(&cli.loader).with_extension("h"))?;
+        .open(&loader_h_path)?;
 
     let loader_h_content = re.replace_all(LOADER_H_TEMPLATE, replacement);
     loader_h.write_all(loader_h_content.into_owned().as_bytes())?;

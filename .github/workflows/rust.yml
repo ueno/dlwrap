@@ -33,12 +33,12 @@ jobs:
     - name: Generate code
       run: |
         cargo run -- --input /usr/include/zstd.h \
-                     --output out \
+                     --output-dir out \
                      --clang-resource-dir "$(clang -print-resource-dir)" \
-                     --loader zstdwrap \
-                     --function-regex "^ZSTD_(versionNumber|versionString)$" \
+                     --loader-basename zstdwrap \
+                     --symbol-regex "^ZSTD_(versionNumber|versionString)$" \
                      --prefix zstdwrap \
-                     --header=zstd.h
+                     --include "<zstd.h>"
     - name: Compile code (with pthread)
       run: |
         gcc -pthread -I./out \
