@@ -308,3 +308,34 @@ impl Builder {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_generate() {
+        let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures");
+        let output_dir = tempdir().expect("unable to create tempdir");
+        let mut builder = Builder::new(&fixture_path.join("clock_gettime.h"));
+        let regex = Regex::new("^clock_gettime$").expect("unable to compile regex");
+        builder
+            .symbol_regex(&regex)
+            .output_dir(&output_dir.path())
+            .prefix("cgwrap")
+            .loader_basename("cgwrap")
+            .generate()
+            .expect("unable to generate");
+
+        for f in &["cgwrap.h", "cgwrap.c", "cgwrapfuncs.h"] {
+            let expected_path = fixture_path.join("out").join(f);
+            let generated_path = output_dir.path().join(f);
+            assert!(generated_path.exists());
+
+            let expected_content = fs::read(expected_path).expect("unable to read");
+            let generated_content = fs::read(generated_path).expect("unable to read");
+            assert_eq!(expected_content, generated_content);
+        }
+    }
+}
