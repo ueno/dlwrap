@@ -1,5 +1,7 @@
 # dlwrap
 
+![Crates.io Version](https://img.shields.io/crates/v/dlwrap) ![docs.rs](https://img.shields.io/docsrs/dlwrap)
+
 When creating an application that supports multiple backends (for
 [compression][use-case-compression],
 [cryptography][use-case-cryptography], etc.), it is sometimes
@@ -45,13 +47,14 @@ A couple of things to note:
 Now proceed to generate helper files:
 
 ```console
-$ cargo run -- --input /usr/include/zstd.h \
-               --output-dir out \
-               --clang-resource-dir "$(clang -print-resource-dir)" \
-               --loader-basename zstdwrap \
-               --symbol-regex "^ZSTD_(versionNumber|versionString)$" \
-               --prefix zstdwrap \
-               --include "<zstd.h>"
+$ cargo install dlwrap
+$ dlwrap --input /usr/include/zstd.h \
+         --output-dir out \
+         --clang-resource-dir "$(clang -print-resource-dir)" \
+         --loader-basename zstdwrap \
+         --symbol-regex "^ZSTD_(versionNumber|versionString)$" \
+         --prefix zstdwrap \
+         --include "<zstd.h>"
 ```
 
 This command will create 3 files under `out/`: `zstdwrap.c`,
