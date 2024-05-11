@@ -26,7 +26,7 @@ struct Cli {
 
     /// Pattern to match symbol
     #[arg(long)]
-    symbol_regex: Option<Regex>,
+    symbol_regex: Vec<Regex>,
 
     /// File listing symbol names
     #[arg(short, long)]
@@ -74,8 +74,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         builder.clang_resource_dir(clang_resource_dir);
     }
 
-    if let Some(ref symbol_regex) = cli.symbol_regex {
-        builder.symbol_regex(symbol_regex);
+    for symbol_regex in cli.symbol_regex {
+        builder.symbol_regex(&symbol_regex);
     }
 
     if let Some(ref symbol_list) = cli.symbol_list {

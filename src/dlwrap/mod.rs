@@ -14,7 +14,7 @@ pub struct Builder {
     input: PathBuf,
     output_dir: Option<PathBuf>,
     clang_resource_dir: Option<PathBuf>,
-    symbol_regex: Option<Regex>,
+    symbol_regex: Vec<Regex>,
     symbol_list: Option<PathBuf>,
     loader_basename: Option<String>,
     prefix: Option<String>,
@@ -128,7 +128,7 @@ impl Builder {
 
     /// Set pattern to match symbol
     pub fn symbol_regex(&mut self, symbol_regex: &Regex) -> &mut Self {
-        self.symbol_regex = Some(symbol_regex.to_owned());
+        self.symbol_regex.push(symbol_regex.to_owned());
         self
     }
 
@@ -205,8 +205,8 @@ impl Builder {
 
         let mut patterns = vec![];
 
-        if let Some(ref regex) = self.symbol_regex {
-            patterns.push(regex.clone());
+        for symbol_regex in &self.symbol_regex {
+            patterns.push(symbol_regex.clone());
         }
 
         if let Some(ref path) = self.symbol_list {
