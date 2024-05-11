@@ -1,6 +1,6 @@
 # dlwrap
 
-![Crates.io Version](https://img.shields.io/crates/v/dlwrap) ![docs.rs](https://img.shields.io/docsrs/dlwrap)
+![Crates.io Version](https://img.shields.io/crates/v/dlwrap?link=https%3A%2F%2Fcrates.io%2Fcrates%2Fdlwrap) ![docs.rs](https://img.shields.io/docsrs/dlwrap?link=https%3A%2F%2Fdocs.rs%2Fdlwrap%2Flatest%2Fdlwrap%2F)
 
 When creating an application that supports multiple backends (for
 [compression][use-case-compression],
