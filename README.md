@@ -6,7 +6,7 @@ When creating an application that supports multiple backends (for
 undesirable to link all supported libraries to the application at
 once.
 
-This can be solved by deferring loading of the library with `dlopen`
+This can be solved by deferring loading of a library with `dlopen`
 until the first time a function from the library is called. Such
 mechanism is typically implemented through wrappers around the library
 functions, though defining the wrappers is cumbersome and error-prone.
@@ -46,12 +46,12 @@ Now proceed to generate helper files:
 
 ```console
 $ cargo run -- --input /usr/include/zstd.h \
-         --output out \
-         --clang-resource-dir "$(clang -print-resource-dir)" \
-         --loader zstdwrap \
-         --function-regex "^ZSTD_(versionNumber|versionString)$" \
-         --prefix zstdwrap \
-         --header=zstd.h
+               --output-dir out \
+               --clang-resource-dir "$(clang -print-resource-dir)" \
+               --loader-basename zstdwrap \
+               --symbol-regex "^ZSTD_(versionNumber|versionString)$" \
+               --prefix zstdwrap \
+               --include "<zstd.h>"
 ```
 
 This command will create 3 files under `out/`: `zstdwrap.c`,

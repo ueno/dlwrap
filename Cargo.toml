@@ -10,3 +10,12 @@ anyhow = "1.0"
 clap = { version = "4", features=["derive"] }
 clang = "2"
 regex = "1"
+
+[[bin]]
+name = "dlwrap"
+path = "src/main.rs"
+doc = false
+
+[lib]
+name = "dlwrap"
+path = "src/lib.rs"

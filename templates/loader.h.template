@@ -1,5 +1,5 @@
-#ifndef @GUARD@
-#define @GUARD@
+#ifndef @LOADER_H_GUARD@
+#define @LOADER_H_GUARD@
 
 @INCLUDES@
 
@@ -25,4 +25,4 @@
  */
 int @LIBRARY_PREFIX@_ensure_library (const char *soname);
 
-#endif /* @GUARD@ */
+#endif /* @LOADER_H_GUARD@ */
