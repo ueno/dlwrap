@@ -30,6 +30,8 @@ jobs:
       run: dnf install -y cargo clang-devel clippy gcc libzstd-devel ltrace rustfmt
     - name: Build
       run: cargo build --verbose
+    - name: Test
+      run: cargo test --verbose
     - name: Generate code
       run: |
         cargo run -- --input /usr/include/zstd.h \
