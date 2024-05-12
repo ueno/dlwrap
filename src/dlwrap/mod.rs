@@ -14,6 +14,7 @@ pub struct Builder {
     input: PathBuf,
     output_dir: Option<PathBuf>,
     clang_resource_dir: Option<PathBuf>,
+    symbol: Vec<String>,
     symbol_regex: Vec<Regex>,
     symbol_list: Option<PathBuf>,
     loader_basename: Option<String>,
@@ -126,6 +127,12 @@ impl Builder {
         self
     }
 
+    /// Set symbol to match
+    pub fn symbol(&mut self, symbol: &str) -> &mut Self {
+        self.symbol.push(symbol.to_owned());
+        self
+    }
+
     /// Set pattern to match symbol
     pub fn symbol_regex(&mut self, symbol_regex: &Regex) -> &mut Self {
         self.symbol_regex.push(symbol_regex.to_owned());
@@ -203,10 +210,14 @@ impl Builder {
 
         let prefix = self.prefix.as_ref().unwrap_or_else(|| &input_file_stem);
 
-        let mut patterns = vec![];
+        let mut symbol_patterns = vec![];
+
+        for symbol in &self.symbol {
+            symbol_patterns.push(Regex::new(&regex::escape(&symbol))?);
+        }
 
         for symbol_regex in &self.symbol_regex {
-            patterns.push(symbol_regex.clone());
+            symbol_patterns.push(symbol_regex.clone());
         }
 
         if let Some(ref path) = self.symbol_list {
@@ -214,10 +225,10 @@ impl Builder {
                 .split('\n')
                 .map(|line| Regex::new(&regex::escape(line)).map_err(Into::into))
                 .collect::<Result<Vec<_>>>()?;
-            patterns.append(&mut function_list);
+            symbol_patterns.append(&mut function_list);
         }
 
-        if patterns.is_empty() {
+        if symbol_patterns.is_empty() {
             return Err(anyhow!("no symbol patterns").into());
         }
 
@@ -302,7 +313,7 @@ impl Builder {
             &self.input,
             &output_dir.join(&functions_h),
             &self.clang_resource_dir,
-            &patterns,
+            &symbol_patterns,
         )?;
 
         Ok(())
@@ -319,9 +330,8 @@ mod tests {
         let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures");
         let output_dir = tempdir().expect("unable to create tempdir");
         let mut builder = Builder::new(&fixture_path.join("clock_gettime.h"));
-        let regex = Regex::new("^clock_gettime$").expect("unable to compile regex");
         builder
-            .symbol_regex(&regex)
+            .symbol("clock_gettime")
             .output_dir(&output_dir.path())
             .prefix("cgwrap")
             .loader_basename("cgwrap")

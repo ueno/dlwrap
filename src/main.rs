@@ -24,6 +24,10 @@ struct Cli {
     #[arg(long)]
     clang_resource_dir: Option<PathBuf>,
 
+    /// Symbol to match
+    #[arg(long)]
+    symbol: Vec<String>,
+
     /// Pattern to match symbol
     #[arg(long)]
     symbol_regex: Vec<Regex>,
@@ -72,6 +76,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(ref clang_resource_dir) = cli.clang_resource_dir {
         builder.clang_resource_dir(clang_resource_dir);
+    }
+
+    for symbol in cli.symbol {
+        builder.symbol(&symbol);
     }
 
     for symbol_regex in cli.symbol_regex {
