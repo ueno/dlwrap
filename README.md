@@ -110,13 +110,12 @@ ZSTD_versionString: 1.5.6
 +++ exited (status 0) +++
 ```
 
-With `ZSTDWRAP_ENABLE_DLOPEN=0`, the same application code can be
-compiled with the standard linkage (i.e., `libzstd` is linked at build
-time):
+Without `ZSTDWRAP_ENABLE_DLOPEN` defined, the same application code
+can be compiled with the standard linkage (i.e., `libzstd` is linked
+at build time):
 
 ```console
 $ gcc -I./out \
-      -DZSTDWRAP_ENABLE_DLOPEN=0 \
       -o zstdver examples/zstdver.c out/zstdwrap.c \
       -lzstd
 

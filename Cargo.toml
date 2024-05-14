@@ -2,13 +2,13 @@
 name = "dlwrap"
 description = "dlopen wrapper code generator"
 repository = "https://github.com/ueno/dlwrap"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "Apache-2.0"
 authors = ["Daiki Ueno"]
 
 [dependencies]
-anyhow = "1.0"
+anyhow = "1"
 clap = { version = "4", features=["derive"] }
 clang = "2"
 regex = "1"
