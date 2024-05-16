@@ -1,3 +1,10 @@
+/*
+ * Copying and distribution of this file, with or without modification,
+ * are permitted in any medium without royalty provided the copyright
+ * notice and this notice are preserved.  This file is offered as-is,
+ * without any warranty.
+ */
+
 #ifndef @LOADER_H_GUARD@
 #define @LOADER_H_GUARD@
 
@@ -22,6 +29,9 @@
 
 /* Ensure SONAME to be loaded and all the necessary symbols are resolved.
  * Returns 0 on success; negative error code otherwise.
+ *
+ * Note that this function is NOT thread-safe; when calling it from
+ * multi-threaded programs, protect it with a locking mechanism.
  */
 int @LIBRARY_PREFIX@_ensure_library (const char *soname);
 

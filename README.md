@@ -8,13 +8,12 @@ When creating an application that supports multiple backends (for
 undesirable to link all supported libraries to the application at
 once.
 
-This can be solved by deferring loading of a library with `dlopen`
-until the first time a function from the library is called. Such
-mechanism is typically implemented through wrappers around the library
-functions, though defining the wrappers is cumbersome and error-prone.
+With `dlopen`, it is possible to defer loading of a library until the
+first time a function from the library is called. Such mechanism is
+typically implemented through wrappers around the library functions,
+though writing the wrappers is cumbersome and error-prone.
 
-`dlwrap` makes it easily for an application to implement such
-mechanism.
+`dlwrap` makes it easy for an application to implement the mechanism.
 
 ## Usage
 
@@ -134,6 +133,8 @@ ZSTD_versionString: 1.5.6
 ## License
 
 Apache-2.0
+
+The generated code can be distributed under FSFAP.
 
 [use-case-compression]: https://gitlab.com/gnutls/gnutls/-/issues/1424
 [use-case-cryptography]: https://github.com/open-quantum-safe/liboqs/pull/1603
