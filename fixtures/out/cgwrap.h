@@ -29,6 +29,9 @@
 
 /* Ensure SONAME to be loaded and all the necessary symbols are resolved.
  * Returns 0 on success; negative error code otherwise.
+ *
+ * Note that this function is NOT thread-safe; when calling it from
+ * multi-threaded programs, protect it with a locking mechanism.
  */
 int cgwrap_ensure_library (const char *soname);
 
