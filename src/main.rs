@@ -3,6 +3,7 @@
 use anyhow::Result;
 use clap::Parser;
 use regex::Regex;
+use std::fs;
 use std::path::PathBuf;
 
 mod dlwrap;
@@ -65,8 +66,12 @@ struct Cli {
     include: Vec<String>,
 
     /// License of the input file
-    #[arg(long)]
+    #[arg(long, conflicts_with = "license_file")]
     license: Option<String>,
+
+    /// File containing license of the input file
+    #[arg(long)]
+    license_file: Option<PathBuf>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -124,6 +129,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(ref license) = cli.license {
         builder.license(license);
+    } else if let Some(ref license_file) = cli.license_file {
+        let license = fs::read_to_string(&license_file)?;
+        builder.license(&license);
     }
 
     builder.generate()
