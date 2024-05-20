@@ -1,5 +1,5 @@
 /*
- * This file was automatically generated from fixtures/clock_gettime.h,
+ * This file was automatically generated from clock_gettime.h,
  * which is covered by the following license:
  * TODO: INSERT LICENSE
  */

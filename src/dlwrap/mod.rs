@@ -64,7 +64,7 @@ fn write_functions(
 {}
  */
 "###,
-        input.as_ref().display(),
+        input.as_ref().file_name().and_then(|f| f.to_str()).unwrap(),
         license
             .unwrap_or("TODO: INSERT LICENSE")
             .lines()
@@ -357,7 +357,7 @@ mod tests {
         let mut builder = Builder::new(&fixture_path.join("clock_gettime.h"));
         builder
             .symbol("clock_gettime")
-            .output_dir(&output_dir.path())
+            //.output_dir(&output_dir.path())
             .prefix("cgwrap")
             .loader_basename("cgwrap")
             .generate()
