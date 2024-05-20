@@ -24,6 +24,7 @@ pub struct Builder {
     soname: Option<String>,
     function_wrapper: Option<String>,
     include: Vec<String>,
+    license: Option<String>,
 }
 
 const LOADER_C_TEMPLATE: &str = include_str!(concat!(
@@ -40,6 +41,7 @@ fn write_functions(
     output: impl AsRef<Path>,
     clang_resource_dir: &Option<PathBuf>,
     patterns: &[Regex],
+    license: Option<&str>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut functions = fs::OpenOptions::new()
         .write(true)
@@ -54,6 +56,22 @@ fn write_functions(
         parser.arguments(&["-resource-dir", resource_dir.to_str().unwrap()]);
     }
     let tu = parser.parse()?;
+    write!(
+        &mut functions,
+        r###"/*
+ * This file was automatically generated from {},
+ * which is covered by the following license:
+{}
+ */
+"###,
+        input.as_ref().display(),
+        license
+            .unwrap_or("TODO: INSERT LICENSE")
+            .lines()
+            .map(|line| format!(" * {}", line))
+            .collect::<Vec<_>>()
+            .join("\n"),
+    )?;
     let funcs = tu
         .get_entity()
         .get_children()
@@ -187,6 +205,12 @@ impl Builder {
         self
     }
 
+    /// Set license of the input file
+    pub fn license(&mut self, license: &str) -> &mut Self {
+        self.license = Some(license.to_owned());
+        self
+    }
+
     /// Generate code
     pub fn generate(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let output_dir = match self.output_dir {
@@ -314,6 +338,7 @@ impl Builder {
             &output_dir.join(&functions_h),
             &self.clang_resource_dir,
             &symbol_patterns,
+            self.license.as_deref(),
         )?;
 
         Ok(())

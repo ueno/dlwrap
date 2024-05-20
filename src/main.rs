@@ -63,6 +63,10 @@ struct Cli {
     /// Additional header files to include
     #[arg(long)]
     include: Vec<String>,
+
+    /// License of the input file
+    #[arg(long)]
+    license: Option<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -116,6 +120,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for include in cli.include {
         builder.include(&include);
+    }
+
+    if let Some(ref license) = cli.license {
+        builder.license(license);
     }
 
     builder.generate()
