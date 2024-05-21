@@ -4,6 +4,7 @@ use anyhow::Result;
 use clap::Parser;
 use regex::Regex;
 use std::fs;
+use std::io::{self, BufRead};
 use std::path::PathBuf;
 
 mod dlwrap;
@@ -26,16 +27,16 @@ struct Cli {
     clang_resource_dir: Option<PathBuf>,
 
     /// Symbol to match
-    #[arg(long)]
+    #[arg(long, conflicts_with = "symbol_file")]
     symbol: Vec<String>,
+
+    /// File listing symbol names
+    #[arg(short, long)]
+    symbol_file: Option<PathBuf>,
 
     /// Pattern to match symbol
     #[arg(long)]
     symbol_regex: Vec<Regex>,
-
-    /// File listing symbol names
-    #[arg(short, long)]
-    symbol_list: Option<PathBuf>,
 
     /// Basename of the loader module
     #[arg(long)]
@@ -91,12 +92,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         builder.symbol(&symbol);
     }
 
-    for symbol_regex in cli.symbol_regex {
-        builder.symbol_regex(&symbol_regex);
+    if let Some(ref symbol_file) = cli.symbol_file {
+        let f = fs::File::open(&symbol_file)?;
+        for line in io::BufReader::new(f).lines() {
+            builder.symbol(&line?);
+        }
     }
 
-    if let Some(ref symbol_list) = cli.symbol_list {
-        builder.symbol_list(symbol_list);
+    for symbol_regex in cli.symbol_regex {
+        builder.symbol_regex(&symbol_regex);
     }
 
     if let Some(ref loader_basename) = cli.loader_basename {

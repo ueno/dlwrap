@@ -16,7 +16,6 @@ pub struct Builder {
     clang_resource_dir: Option<PathBuf>,
     symbol: Vec<String>,
     symbol_regex: Vec<Regex>,
-    symbol_list: Option<PathBuf>,
     loader_basename: Option<String>,
     prefix: Option<String>,
     symbol_prefix: Option<String>,
@@ -157,12 +156,6 @@ impl Builder {
         self
     }
 
-    /// Set file listing symbol names
-    pub fn symbol_list(&mut self, symbol_list: impl AsRef<Path>) -> &mut Self {
-        self.symbol_list = Some(symbol_list.as_ref().to_path_buf());
-        self
-    }
-
     /// Set basename of the loader module
     pub fn loader_basename(&mut self, loader_basename: &str) -> &mut Self {
         self.loader_basename = Some(loader_basename.to_owned());
@@ -242,14 +235,6 @@ impl Builder {
 
         for symbol_regex in &self.symbol_regex {
             symbol_patterns.push(symbol_regex.clone());
-        }
-
-        if let Some(ref path) = self.symbol_list {
-            let mut function_list = String::from_utf8_lossy(&fs::read(path)?)
-                .split('\n')
-                .map(|line| Regex::new(&regex::escape(line)).map_err(Into::into))
-                .collect::<Result<Vec<_>>>()?;
-            symbol_patterns.append(&mut function_list);
         }
 
         if symbol_patterns.is_empty() {
