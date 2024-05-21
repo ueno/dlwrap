@@ -135,9 +135,9 @@ impl Builder {
         let loader_basename = self
             .loader_basename
             .as_ref()
-            .unwrap_or_else(|| &input_file_stem);
+            .unwrap_or(&input_file_stem);
 
-        let prefix = self.prefix.as_ref().unwrap_or_else(|| &input_file_stem);
+        let prefix = self.prefix.as_ref().unwrap_or(&input_file_stem);
 
         if self.symbol.is_empty() && self.symbol_regex.is_empty() {
             return Err(anyhow!("no symbol patterns").into());
@@ -197,7 +197,7 @@ impl Builder {
             "ENABLE_DLOPEN" => &enable_dlopen,
             "ENABLE_PTHREAD" => &enable_pthread,
             "INCLUDES" => &includes,
-            "LOADER_H" => &loader_h_file_name,
+            "LOADER_H" => loader_h_file_name,
             "LOADER_H_GUARD" => &loader_h_guard,
             _ => unreachable!(),
         };
@@ -206,7 +206,7 @@ impl Builder {
             .write(true)
             .create(true)
             .truncate(true)
-            .open(&loader_c_path)?;
+            .open(loader_c_path)?;
 
         let loader_c_content = re.replace_all(LOADER_C_TEMPLATE, replacement);
         loader_c.write_all(loader_c_content.into_owned().as_bytes())?;
@@ -224,7 +224,7 @@ impl Builder {
             .write(true)
             .create(true)
             .truncate(true)
-            .open(&output_dir.join(&functions_h))?;
+            .open(output_dir.join(&functions_h))?;
 
         self.write_functions(&mut output)?;
 

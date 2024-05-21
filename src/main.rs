@@ -93,7 +93,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if let Some(ref symbol_file) = cli.symbol_file {
-        let f = fs::File::open(&symbol_file)?;
+        let f = fs::File::open(symbol_file)?;
         for line in io::BufReader::new(f).lines() {
             builder.symbol(&line?);
         }
@@ -134,7 +134,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(ref license) = cli.license {
         builder.license(license);
     } else if let Some(ref license_file) = cli.license_file {
-        let license = fs::read_to_string(&license_file)?;
+        let license = fs::read_to_string(license_file)?;
         builder.license(&license);
     }
 
