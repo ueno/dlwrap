@@ -132,10 +132,7 @@ impl Builder {
             .unwrap()
             .to_owned();
 
-        let loader_basename = self
-            .loader_basename
-            .as_ref()
-            .unwrap_or(&input_file_stem);
+        let loader_basename = self.loader_basename.as_ref().unwrap_or(&input_file_stem);
 
         let prefix = self.prefix.as_ref().unwrap_or(&input_file_stem);
 
