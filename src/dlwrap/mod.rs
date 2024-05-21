@@ -35,94 +35,6 @@ const LOADER_H_TEMPLATE: &str = include_str!(concat!(
     "/templates/loader.h.template"
 ));
 
-fn write_functions(
-    input: impl AsRef<Path>,
-    output: impl AsRef<Path>,
-    clang_resource_dir: &Option<PathBuf>,
-    patterns: &[Regex],
-    license: Option<&str>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let mut functions = fs::OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(output.as_ref())?;
-
-    let clang = Clang::new()?;
-    let index = Index::new(&clang, false, false);
-    let mut parser = index.parser(input.as_ref());
-    if let Some(resource_dir) = clang_resource_dir {
-        parser.arguments(&["-resource-dir", resource_dir.to_str().unwrap()]);
-    }
-    let tu = parser.parse()?;
-    write!(
-        &mut functions,
-        r###"/*
- * This file was automatically generated from {},
- * which is covered by the following license:
-{}
- */
-"###,
-        input.as_ref().file_name().and_then(|f| f.to_str()).unwrap(),
-        license
-            .unwrap_or("TODO: INSERT LICENSE")
-            .lines()
-            .map(|line| format!(" * {}", line))
-            .collect::<Vec<_>>()
-            .join("\n"),
-    )?;
-    let funcs = tu
-        .get_entity()
-        .get_children()
-        .into_iter()
-        .filter(|e| e.get_kind() == EntityKind::FunctionDecl)
-        .collect::<Vec<_>>();
-    for func in funcs {
-        let name = func.get_name().unwrap();
-        if !patterns.iter().any(|pattern| pattern.is_match_at(&name, 0)) {
-            continue;
-        }
-
-        let result_type = func.get_result_type().unwrap();
-        let args = func
-            .get_arguments()
-            .unwrap()
-            .into_iter()
-            .map(|arg| {
-                let type_ = arg.get_type().unwrap().get_display_name();
-                let delim = if type_.ends_with('*') { "" } else { " " };
-                format!("{}{}{}", type_, delim, arg.get_display_name().unwrap())
-            })
-            .collect::<Vec<_>>();
-        let cargs = func
-            .get_arguments()
-            .unwrap()
-            .into_iter()
-            .map(|arg| arg.get_display_name().unwrap().to_string())
-            .collect::<Vec<_>>();
-        let macro_ = if result_type.get_kind() == TypeKind::Void {
-            "VOID_FUNC"
-        } else {
-            "FUNC"
-        };
-        writeln!(
-            &mut functions,
-            "{}({}, {}, ({}), ({}))",
-            macro_,
-            result_type.get_display_name(),
-            name,
-            if args.is_empty() {
-                "void".to_string()
-            } else {
-                args.join(", ")
-            },
-            cargs.join(", ")
-        )?;
-    }
-
-    Ok(())
-}
-
 impl Builder {
     /// Create a new builder
     pub fn new(input: impl AsRef<Path>) -> Self {
@@ -227,17 +139,7 @@ impl Builder {
 
         let prefix = self.prefix.as_ref().unwrap_or_else(|| &input_file_stem);
 
-        let mut symbol_patterns = vec![];
-
-        for symbol in &self.symbol {
-            symbol_patterns.push(Regex::new(&regex::escape(&symbol))?);
-        }
-
-        for symbol_regex in &self.symbol_regex {
-            symbol_patterns.push(symbol_regex.clone());
-        }
-
-        if symbol_patterns.is_empty() {
+        if self.symbol.is_empty() && self.symbol_regex.is_empty() {
             return Err(anyhow!("no symbol patterns").into());
         }
 
@@ -318,13 +220,104 @@ impl Builder {
         let loader_h_content = re.replace_all(LOADER_H_TEMPLATE, replacement);
         loader_h.write_all(loader_h_content.into_owned().as_bytes())?;
 
-        write_functions(
-            &self.input,
-            &output_dir.join(&functions_h),
-            &self.clang_resource_dir,
-            &symbol_patterns,
-            self.license.as_deref(),
+        let mut output = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&output_dir.join(&functions_h))?;
+
+        self.write_functions(&mut output)?;
+
+        Ok(())
+    }
+
+    fn write_function(
+        &self,
+        mut output: impl Write,
+        func: &Entity,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let name = func.get_name().unwrap();
+        let result_type = func.get_result_type().unwrap();
+        let args = func
+            .get_arguments()
+            .unwrap()
+            .into_iter()
+            .map(|arg| {
+                let type_ = arg.get_type().unwrap().get_display_name();
+                let delim = if type_.ends_with('*') { "" } else { " " };
+                format!("{}{}{}", type_, delim, arg.get_display_name().unwrap())
+            })
+            .collect::<Vec<_>>();
+        let cargs = func
+            .get_arguments()
+            .unwrap()
+            .into_iter()
+            .map(|arg| arg.get_display_name().unwrap().to_string())
+            .collect::<Vec<_>>();
+        let macro_ = if result_type.get_kind() == TypeKind::Void {
+            "VOID_FUNC"
+        } else {
+            "FUNC"
+        };
+        writeln!(
+            &mut output,
+            "{}({}, {}, ({}), ({}))",
+            macro_,
+            result_type.get_display_name(),
+            name,
+            if args.is_empty() {
+                "void".to_string()
+            } else {
+                args.join(", ")
+            },
+            cargs.join(", ")
         )?;
+        Ok(())
+    }
+
+    fn write_functions(&self, mut output: impl Write) -> Result<(), Box<dyn std::error::Error>> {
+        let clang = Clang::new()?;
+        let index = Index::new(&clang, false, false);
+        let mut parser = index.parser(&self.input);
+        if let Some(ref resource_dir) = self.clang_resource_dir {
+            parser.arguments(&["-resource-dir", resource_dir.to_str().unwrap()]);
+        }
+        let tu = parser.parse()?;
+        write!(
+            &mut output,
+            r###"/*
+ * This file was automatically generated from {},
+ * which is covered by the following license:
+{}
+ */
+"###,
+            self.input.file_name().and_then(|f| f.to_str()).unwrap(),
+            self.license
+                .as_deref()
+                .unwrap_or("TODO: INSERT LICENSE")
+                .lines()
+                .map(|line| format!(" * {}", line))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )?;
+        let funcs = tu
+            .get_entity()
+            .get_children()
+            .into_iter()
+            .filter(|e| e.get_kind() == EntityKind::FunctionDecl)
+            .collect::<Vec<_>>();
+        for func in funcs {
+            let name = func.get_name().unwrap();
+            if !self.symbol.iter().any(|symbol| symbol == &name)
+                && !self
+                    .symbol_regex
+                    .iter()
+                    .any(|pattern| pattern.is_match_at(&name, 0))
+            {
+                continue;
+            }
+            self.write_function(&mut output, &func)?;
+        }
 
         Ok(())
     }
