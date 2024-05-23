@@ -28,11 +28,11 @@ pub struct Builder {
 
 const LOADER_C_TEMPLATE: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/templates/loader.c.template"
+    "/templates/loader.c.in"
 ));
 const LOADER_H_TEMPLATE: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/templates/loader.h.template"
+    "/templates/loader.h.in"
 ));
 
 impl Builder {
