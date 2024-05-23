@@ -35,4 +35,11 @@
  */
 int cgwrap_ensure_library (const char *soname);
 
+/* Unload library and reset symbols.
+ *
+ * Note that this function is NOT thread-safe; when calling it from
+ * multi-threaded programs, protect it with a locking mechanism.
+ */
+void cgwrap_unload_library (void);
+
 #endif /* CGWRAP_H_ */

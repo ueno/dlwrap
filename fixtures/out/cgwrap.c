@@ -121,6 +121,21 @@ cgwrap_ensure_library (const char *soname)
   return 0;
 }
 
+void
+cgwrap_unload_library (void)
+{
+  if (cgwrap_dlhandle)
+    dlclose (cgwrap_dlhandle);
+
+#define FUNC(ret, name, args, cargs)		\
+  cgwrap_sym_##name = NULL;
+#define VOID_FUNC FUNC
+#include "cgwrapfuncs.h"
+#undef VOID_FUNC
+#undef FUNC
+#undef RESET_SYMBOL
+}
+
 #else /* CGWRAP_ENABLE_DLOPEN */
 
 int

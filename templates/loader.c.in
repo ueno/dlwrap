@@ -121,6 +121,21 @@ int
   return 0;
 }
 
+void
+@LIBRARY_PREFIX@_unload_library (void)
+{
+  if (@LIBRARY_PREFIX@_dlhandle)
+    dlclose (@LIBRARY_PREFIX@_dlhandle);
+
+#define FUNC(ret, name, args, cargs)		\
+  @SYMBOL_PREFIX@_##name = NULL;
+#define VOID_FUNC FUNC
+#include "@FUNCTIONS_H@"
+#undef VOID_FUNC
+#undef FUNC
+#undef RESET_SYMBOL
+}
+
 #else /* @ENABLE_DLOPEN@ */
 
 int

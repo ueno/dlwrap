@@ -35,4 +35,11 @@
  */
 int @LIBRARY_PREFIX@_ensure_library (const char *soname);
 
+/* Unload library and reset symbols.
+ *
+ * Note that this function is NOT thread-safe; when calling it from
+ * multi-threaded programs, protect it with a locking mechanism.
+ */
+void @LIBRARY_PREFIX@_unload_library (void);
+
 #endif /* @LOADER_H_GUARD@ */
