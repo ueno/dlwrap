@@ -8,7 +8,7 @@
 #ifndef CGWRAP_H_
 #define CGWRAP_H_
 
-
+#include <time.h>
 
 #if defined(CGWRAP_ENABLE_DLOPEN) && CGWRAP_ENABLE_DLOPEN
 

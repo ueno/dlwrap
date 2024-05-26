@@ -5,4 +5,5 @@ generate-fixtures::
 		     --output-dir fixtures/out \
 		     --symbol clock_gettime \
 		     --prefix cgwrap \
+		     --include "<time.h>" \
 		     --loader-basename cgwrap

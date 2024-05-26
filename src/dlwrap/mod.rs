@@ -323,6 +323,7 @@ impl Builder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::process::Command;
     use tempfile::tempdir;
 
     #[test]
@@ -335,6 +336,7 @@ mod tests {
             .output_dir(&output_dir.path())
             .prefix("cgwrap")
             .loader_basename("cgwrap")
+            .include("<time.h>")
             .generate()
             .expect("unable to generate");
 
@@ -347,5 +349,39 @@ mod tests {
             let generated_content = fs::read(generated_path).expect("unable to read");
             assert_eq!(expected_content, generated_content);
         }
+
+        Command::new("gcc")
+            .args([
+                "-pthread",
+                "-DCGWRAP_ENABLE_DLOPEN=1",
+                "-DCGWRAP_SONAME=\"libc.so.6\"",
+                "-DCGWRAP_ENABLE_PTHREAD=1",
+            ])
+            .arg("-I")
+            .arg(output_dir.path())
+            .arg("-o")
+            .arg(output_dir.path().join("cg"))
+            .arg(fixture_path.join("clock_gettime.c"))
+            .arg(output_dir.path().join("cgwrap.c"))
+            .status()
+            .expect("unable to compile generated code");
+
+        Command::new(output_dir.path().join("cg"))
+            .status()
+            .expect("unable to run generated code");
+
+        Command::new("gcc")
+            .arg("-I")
+            .arg(output_dir.path())
+            .arg("-o")
+            .arg(output_dir.path().join("cg"))
+            .arg(fixture_path.join("clock_gettime.c"))
+            .arg(output_dir.path().join("cgwrap.c"))
+            .status()
+            .expect("unable to compile generated code");
+
+        Command::new(output_dir.path().join("cg"))
+            .status()
+            .expect("unable to run generated code");
     }
 }

@@ -139,9 +139,10 @@ cgwrap_unload_library (void)
 #else /* CGWRAP_ENABLE_DLOPEN */
 
 int
-cgwrap_ensure_library (const char *soname)
+cgwrap_ensure_library (const char *soname, int flags)
 {
   (void) soname;
+  (void) flags;
   return 0;
 }
 
