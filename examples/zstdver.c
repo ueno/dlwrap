@@ -11,7 +11,7 @@ main (void)
   if (!soname)
     abort();
 
-  zstdwrap_ensure_library (soname);
+  zstdwrap_ensure_library (soname, RTLD_LAZY | RTLD_LOCAL);
 #endif
 
   unsigned v1 = ZSTDWRAP_FUNC(ZSTD_versionNumber)();
