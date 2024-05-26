@@ -23,7 +23,7 @@
 static void
 ensure_library (void)
 {
-  if (@LIBRARY_PREFIX@_ensure_library (@LIBRARY_SONAME@) < 0)
+  if (@LIBRARY_PREFIX@_ensure_library (@LIBRARY_SONAME@, RTLD_LAZY | RTLD_LOCAL) < 0)
     abort ();
 }
 
@@ -96,13 +96,13 @@ ensure_symbol (const char *name, void **symp)
 }
 
 int
-@LIBRARY_PREFIX@_ensure_library (const char *soname)
+@LIBRARY_PREFIX@_ensure_library (const char *soname, int flags)
 {
   int err;
 
   if (!@LIBRARY_PREFIX@_dlhandle)
     {
-      @LIBRARY_PREFIX@_dlhandle = dlopen (soname, RTLD_LAZY | RTLD_LOCAL);
+      @LIBRARY_PREFIX@_dlhandle = dlopen (soname, flags);
       if (!@LIBRARY_PREFIX@_dlhandle)
 	return -errno;
     }
