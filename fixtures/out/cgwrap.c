@@ -23,7 +23,7 @@
 static void
 ensure_library (void)
 {
-  if (cgwrap_ensure_library (CGWRAP_SONAME) < 0)
+  if (cgwrap_ensure_library (CGWRAP_SONAME, RTLD_LAZY | RTLD_LOCAL) < 0)
     abort ();
 }
 
@@ -96,13 +96,13 @@ ensure_symbol (const char *name, void **symp)
 }
 
 int
-cgwrap_ensure_library (const char *soname)
+cgwrap_ensure_library (const char *soname, int flags)
 {
   int err;
 
   if (!cgwrap_dlhandle)
     {
-      cgwrap_dlhandle = dlopen (soname, RTLD_LAZY | RTLD_LOCAL);
+      cgwrap_dlhandle = dlopen (soname, flags);
       if (!cgwrap_dlhandle)
 	return -errno;
     }
