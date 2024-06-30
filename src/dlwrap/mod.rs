@@ -241,8 +241,19 @@ impl Builder {
             .into_iter()
             .map(|arg| {
                 let type_ = arg.get_type().unwrap().get_display_name();
+                let (type_, suffix) = if let Some(pos) = type_.find('[') {
+                    type_.split_at(pos)
+                } else {
+                    (type_.as_str(), "")
+                };
                 let delim = if type_.ends_with('*') { "" } else { " " };
-                format!("{}{}{}", type_, delim, arg.get_display_name().unwrap())
+                format!(
+                    "{}{}{}{}",
+                    type_,
+                    delim,
+                    arg.get_display_name().unwrap(),
+                    suffix
+                )
             })
             .collect::<Vec<_>>();
         let cargs = func
@@ -323,10 +334,12 @@ impl Builder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
     use std::process::Command;
     use tempfile::tempdir;
 
     #[test]
+    #[serial]
     fn test_generate() {
         let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures");
         let output_dir = tempdir().expect("unable to create tempdir");
@@ -383,5 +396,30 @@ mod tests {
         Command::new(output_dir.path().join("cg"))
             .status()
             .expect("unable to run generated code");
+    }
+
+    #[test]
+    #[serial]
+    fn test_generate_array() {
+        let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures");
+        let output_dir = tempdir().expect("unable to create tempdir");
+        let mut builder = Builder::new(&fixture_path.join("array.h"));
+        builder
+            .symbol("compress")
+            .output_dir(&output_dir.path())
+            .prefix("array")
+            .loader_basename("array")
+            .generate()
+            .expect("unable to generate");
+
+        for f in &["array.h", "array.c", "arrayfuncs.h"] {
+            let expected_path = fixture_path.join("out").join(f);
+            let generated_path = output_dir.path().join(f);
+            assert!(generated_path.exists());
+
+            let expected_content = fs::read(expected_path).expect("unable to read");
+            let generated_content = fs::read(generated_path).expect("unable to read");
+            assert_eq!(expected_content, generated_content);
+        }
     }
 }
