@@ -5,6 +5,10 @@
  * without any warranty.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "cgwrap.h"
 
 #if defined(CGWRAP_ENABLE_DLOPEN) && CGWRAP_ENABLE_DLOPEN
@@ -52,6 +56,9 @@ static pthread_once_t dlopen_once = PTHREAD_ONCE_INIT;
 static void *cgwrap_dlhandle;
 
 /* Define redirection symbols */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
+
 #if (2 <= __GNUC__ || (4 <= __clang_major__))
 #define FUNC(ret, name, args, cargs)			\
   static __typeof__(name)(*cgwrap_sym_##name);
@@ -64,7 +71,12 @@ static void *cgwrap_dlhandle;
 #undef VOID_FUNC
 #undef FUNC
 
+#pragma GCC diagnostic pop
+
 /* Define redirection wrapper functions */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
+
 #define FUNC(ret, name, args, cargs)        \
 ret cgwrap_func_##name args           \
 {					    \
@@ -83,6 +95,8 @@ ret cgwrap_func_##name args           \
 #undef VOID_FUNC
 #undef FUNC
 
+#pragma GCC diagnostic pop
+
 static int
 ensure_symbol (const char *name, void **symp)
 {
@@ -93,6 +107,7 @@ ensure_symbol (const char *name, void **symp)
 	return -errno;
       *symp = sym;
     }
+  return 0;
 }
 
 int
@@ -109,6 +124,10 @@ cgwrap_ensure_library (const char *soname, int flags)
 
 #define ENSURE_SYMBOL(name)					\
   ensure_symbol(#name, (void **)&cgwrap_sym_##name)
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
+
 #define FUNC(ret, name, args, cargs)	\
   err = ENSURE_SYMBOL(name);		\
   if (err < 0)				\
@@ -117,6 +136,9 @@ cgwrap_ensure_library (const char *soname, int flags)
 #include "cgwrapfuncs.h"
 #undef VOID_FUNC
 #undef FUNC
+
+#pragma GCC diagnostic pop
+
 #undef ENSURE_SYMBOL
   return 0;
 }
@@ -127,12 +149,18 @@ cgwrap_unload_library (void)
   if (cgwrap_dlhandle)
     dlclose (cgwrap_dlhandle);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
+
 #define FUNC(ret, name, args, cargs)		\
   cgwrap_sym_##name = NULL;
 #define VOID_FUNC FUNC
 #include "cgwrapfuncs.h"
 #undef VOID_FUNC
 #undef FUNC
+
+#pragma GCC diagnostic pop
+
 #undef RESET_SYMBOL
 }
 

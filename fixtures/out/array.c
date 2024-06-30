@@ -9,51 +9,51 @@
 #include "config.h"
 #endif
 
-#include "@LOADER_H@"
+#include "array.h"
 
-#if defined(@ENABLE_DLOPEN@) && @ENABLE_DLOPEN@
+#if defined(ARRAY_ENABLE_DLOPEN) && ARRAY_ENABLE_DLOPEN
 
 #include <assert.h>
 #include <dlfcn.h>
 #include <errno.h>
 #include <stdlib.h>
 
-/* If @LIBRARY_SONAME@ is defined, dlopen handle can be automatically
+/* If ARRAY_SONAME is defined, dlopen handle can be automatically
  * set; otherwise, the caller needs to call
- * @LIBRARY_PREFIX@_ensure_library with soname determined at run time.
+ * array_ensure_library with soname determined at run time.
  */
-#ifdef @LIBRARY_SONAME@
+#ifdef ARRAY_SONAME
 
 static void
 ensure_library (void)
 {
-  if (@LIBRARY_PREFIX@_ensure_library (@LIBRARY_SONAME@, RTLD_LAZY | RTLD_LOCAL) < 0)
+  if (array_ensure_library (ARRAY_SONAME, RTLD_LAZY | RTLD_LOCAL) < 0)
     abort ();
 }
 
-#if defined(@ENABLE_PTHREAD@) && @ENABLE_PTHREAD@
+#if defined(ARRAY_ENABLE_PTHREAD) && ARRAY_ENABLE_PTHREAD
 #include <pthread.h>
 
 static pthread_once_t dlopen_once = PTHREAD_ONCE_INIT;
 
 #define ENSURE_LIBRARY pthread_once(&dlopen_once, ensure_library)
 
-#else /* @ENABLE_PTHREAD@ */
+#else /* ARRAY_ENABLE_PTHREAD */
 
 #define ENSURE_LIBRARY do {	    \
-    if (!@LIBRARY_PREFIX@_dlhandle) \
+    if (!array_dlhandle) \
       ensure_library();		    \
   } while (0)
 
-#endif /* !@ENABLE_PTHREAD@ */
+#endif /* !ARRAY_ENABLE_PTHREAD */
 
-#else /* @LIBRARY_SONAME@ */
+#else /* ARRAY_SONAME */
 
 #define ENSURE_LIBRARY do {} while (0)
 
-#endif /* !@LIBRARY_SONAME@ */
+#endif /* !ARRAY_SONAME */
 
-static void *@LIBRARY_PREFIX@_dlhandle;
+static void *array_dlhandle;
 
 /* Define redirection symbols */
 #pragma GCC diagnostic push
@@ -61,13 +61,13 @@ static void *@LIBRARY_PREFIX@_dlhandle;
 
 #if (2 <= __GNUC__ || (4 <= __clang_major__))
 #define FUNC(ret, name, args, cargs)			\
-  static __typeof__(name)(*@SYMBOL_PREFIX@_##name);
+  static __typeof__(name)(*array_sym_##name);
 #else
 #define FUNC(ret, name, args, cargs)		\
-  static ret(*@SYMBOL_PREFIX@_##name)args;
+  static ret(*array_sym_##name)args;
 #endif
 #define VOID_FUNC FUNC
-#include "@FUNCTIONS_H@"
+#include "arrayfuncs.h"
 #undef VOID_FUNC
 #undef FUNC
 
@@ -78,20 +78,20 @@ static void *@LIBRARY_PREFIX@_dlhandle;
 #pragma GCC diagnostic ignored "-Wunused-macros"
 
 #define FUNC(ret, name, args, cargs)        \
-ret @FUNCTION_PREFIX@_##name args           \
+ret array_func_##name args           \
 {					    \
   ENSURE_LIBRARY;			    \
-  assert (@SYMBOL_PREFIX@_##name);	    \
-  return @SYMBOL_PREFIX@_##name cargs;	    \
+  assert (array_sym_##name);	    \
+  return array_sym_##name cargs;	    \
 }
 #define VOID_FUNC(ret, name, args, cargs)   \
-ret @FUNCTION_PREFIX@_##name args           \
+ret array_func_##name args           \
 {					    \
   ENSURE_LIBRARY;			    \
-  assert (@SYMBOL_PREFIX@_##name);	    \
-  @SYMBOL_PREFIX@_##name cargs;		    \
+  assert (array_sym_##name);	    \
+  array_sym_##name cargs;		    \
 }
-#include "@FUNCTIONS_H@"
+#include "arrayfuncs.h"
 #undef VOID_FUNC
 #undef FUNC
 
@@ -102,7 +102,7 @@ ensure_symbol (const char *name, void **symp)
 {
   if (!*symp)
     {
-      void *sym = dlsym (@LIBRARY_PREFIX@_dlhandle, name);
+      void *sym = dlsym (array_dlhandle, name);
       if (!sym)
 	return -errno;
       *symp = sym;
@@ -111,19 +111,19 @@ ensure_symbol (const char *name, void **symp)
 }
 
 int
-@LIBRARY_PREFIX@_ensure_library (const char *soname, int flags)
+array_ensure_library (const char *soname, int flags)
 {
   int err;
 
-  if (!@LIBRARY_PREFIX@_dlhandle)
+  if (!array_dlhandle)
     {
-      @LIBRARY_PREFIX@_dlhandle = dlopen (soname, flags);
-      if (!@LIBRARY_PREFIX@_dlhandle)
+      array_dlhandle = dlopen (soname, flags);
+      if (!array_dlhandle)
 	return -errno;
     }
 
 #define ENSURE_SYMBOL(name)					\
-  ensure_symbol(#name, (void **)&@SYMBOL_PREFIX@_##name)
+  ensure_symbol(#name, (void **)&array_sym_##name)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-macros"
@@ -133,7 +133,7 @@ int
   if (err < 0)				\
     return err;
 #define VOID_FUNC FUNC
-#include "@FUNCTIONS_H@"
+#include "arrayfuncs.h"
 #undef VOID_FUNC
 #undef FUNC
 
@@ -144,18 +144,18 @@ int
 }
 
 void
-@LIBRARY_PREFIX@_unload_library (void)
+array_unload_library (void)
 {
-  if (@LIBRARY_PREFIX@_dlhandle)
-    dlclose (@LIBRARY_PREFIX@_dlhandle);
+  if (array_dlhandle)
+    dlclose (array_dlhandle);
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-macros"
 
 #define FUNC(ret, name, args, cargs)		\
-  @SYMBOL_PREFIX@_##name = NULL;
+  array_sym_##name = NULL;
 #define VOID_FUNC FUNC
-#include "@FUNCTIONS_H@"
+#include "arrayfuncs.h"
 #undef VOID_FUNC
 #undef FUNC
 
@@ -164,14 +164,14 @@ void
 #undef RESET_SYMBOL
 }
 
-#else /* @ENABLE_DLOPEN@ */
+#else /* ARRAY_ENABLE_DLOPEN */
 
 int
-@LIBRARY_PREFIX@_ensure_library (const char *soname, int flags)
+array_ensure_library (const char *soname, int flags)
 {
   (void) soname;
   (void) flags;
   return 0;
 }
 
-#endif /* !@ENABLE_DLOPEN@ */
+#endif /* !ARRAY_ENABLE_DLOPEN */
