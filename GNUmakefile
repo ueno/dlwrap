@@ -7,3 +7,8 @@ generate-fixtures::
 		     --prefix cgwrap \
 		     --include "<time.h>" \
 		     --loader-basename cgwrap
+	cargo run -- --input fixtures/array.h \
+		     --output-dir fixtures/out \
+		     --symbol compress \
+		     --prefix array \
+		     --loader-basename array

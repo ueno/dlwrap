@@ -174,4 +174,9 @@ int
   return 0;
 }
 
+void
+@LIBRARY_PREFIX@_unload_library (void)
+{
+}
+
 #endif /* !@ENABLE_DLOPEN@ */

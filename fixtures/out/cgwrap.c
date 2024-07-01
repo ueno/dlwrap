@@ -174,4 +174,9 @@ cgwrap_ensure_library (const char *soname, int flags)
   return 0;
 }
 
+void
+cgwrap_unload_library (void)
+{
+}
+
 #endif /* !CGWRAP_ENABLE_DLOPEN */

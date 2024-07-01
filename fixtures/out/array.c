@@ -174,4 +174,9 @@ array_ensure_library (const char *soname, int flags)
   return 0;
 }
 
+void
+array_unload_library (void)
+{
+}
+
 #endif /* !ARRAY_ENABLE_DLOPEN */
