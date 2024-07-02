@@ -73,6 +73,9 @@ struct Cli {
     /// File containing license of the input file
     #[arg(long)]
     license_file: Option<PathBuf>,
+
+    /// Name of the header guard macro
+    header_guard: Option<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -136,6 +139,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else if let Some(ref license_file) = cli.license_file {
         let license = fs::read_to_string(license_file)?;
         builder.license(&license);
+    }
+
+    if let Some(ref header_guard) = cli.header_guard {
+        builder.header_guard(header_guard);
     }
 
     builder.generate()
