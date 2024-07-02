@@ -313,7 +313,7 @@ impl Builder {
                 .as_deref()
                 .unwrap_or("TODO: INSERT LICENSE")
                 .lines()
-                .map(|line| format!(" * {}", line))
+                .map(|line| format!(" * {}", line).trim_end().to_owned())
                 .collect::<Vec<_>>()
                 .join("\n"),
         )?;
