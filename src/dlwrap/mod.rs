@@ -24,6 +24,7 @@ pub struct Builder {
     function_wrapper: Option<String>,
     include: Vec<String>,
     license: Option<String>,
+    header_guard: Option<String>,
 }
 
 const LOADER_C_TEMPLATE: &str = include_str!(concat!(
@@ -116,6 +117,12 @@ impl Builder {
         self
     }
 
+    /// Set name of the header guard macro
+    pub fn header_guard(&mut self, header_guard: &str) -> &mut Self {
+        self.header_guard = Some(header_guard.to_owned());
+        self
+    }
+
     /// Generate code
     pub fn generate(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let output_dir = match self.output_dir {
@@ -153,12 +160,14 @@ impl Builder {
             .join("\n");
         let functions_h = format!("{}funcs.h", loader_basename);
         let loader_h_file_name = loader_h_path.file_name().and_then(|f| f.to_str()).unwrap();
-        let loader_h_guard = format!(
-            "{}_",
-            loader_h_file_name
-                .to_uppercase()
-                .replace(|c: char| !(c.is_ascii_alphanumeric() || c == '_'), "_"),
-        );
+        let loader_h_guard = self.header_guard.take().unwrap_or_else(|| {
+            format!(
+                "{}_",
+                loader_h_file_name
+                    .to_uppercase()
+                    .replace(|c: char| !(c.is_ascii_alphanumeric() || c == '_'), "_"),
+            )
+        });
 
         let enable_dlopen = format!("{}_ENABLE_DLOPEN", prefix.to_uppercase());
         let enable_pthread = format!("{}_ENABLE_PTHREAD", prefix.to_uppercase());
@@ -304,7 +313,7 @@ impl Builder {
                 .as_deref()
                 .unwrap_or("TODO: INSERT LICENSE")
                 .lines()
-                .map(|line| format!(" * {}", line))
+                .map(|line| format!(" * {}", line).trim_end().to_owned())
                 .collect::<Vec<_>>()
                 .join("\n"),
         )?;
