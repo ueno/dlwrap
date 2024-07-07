@@ -75,6 +75,7 @@ struct Cli {
     license_file: Option<PathBuf>,
 
     /// Name of the header guard macro
+    #[arg(long)]
     header_guard: Option<String>,
 }
 
