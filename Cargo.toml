@@ -2,7 +2,7 @@
 name = "dlwrap"
 description = "dlopen wrapper code generator"
 repository = "https://github.com/ueno/dlwrap"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2021"
 license = "Apache-2.0"
 authors = ["Daiki Ueno"]
