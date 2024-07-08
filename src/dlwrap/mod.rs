@@ -249,20 +249,8 @@ impl Builder {
             .unwrap()
             .into_iter()
             .map(|arg| {
-                let type_ = arg.get_type().unwrap().get_display_name();
-                let (type_, suffix) = if let Some(pos) = type_.find('[') {
-                    type_.split_at(pos)
-                } else {
-                    (type_.as_str(), "")
-                };
-                let delim = if type_.ends_with('*') { "" } else { " " };
-                format!(
-                    "{}{}{}{}",
-                    type_,
-                    delim,
-                    arg.get_display_name().unwrap(),
-                    suffix
-                )
+                let pp = arg.get_pretty_printer();
+                pp.print()
             })
             .collect::<Vec<_>>();
         let cargs = func

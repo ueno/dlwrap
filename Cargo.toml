@@ -10,7 +10,7 @@ authors = ["Daiki Ueno"]
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features=["derive"] }
-clang = "2"
+clang = { version = "2", features=["clang_7_0"] }
 regex = "1"
 
 [dev-dependencies]
