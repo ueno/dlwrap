@@ -128,10 +128,13 @@ cgwrap_ensure_library (const char *soname, int flags)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-macros"
 
-#define FUNC(ret, name, args, cargs)	\
-  err = ENSURE_SYMBOL(name);		\
-  if (err < 0)				\
-    return err;
+#define FUNC(ret, name, args, cargs)		\
+  err = ENSURE_SYMBOL(name);			\
+  if (err < 0)					\
+    {						\
+      cgwrap_dlhandle = NULL;		\
+      return err;				\
+    }
 #define VOID_FUNC FUNC
 #include "cgwrapfuncs.h"
 #undef VOID_FUNC
@@ -165,6 +168,12 @@ cgwrap_unload_library (void)
 #pragma GCC diagnostic pop
 }
 
+unsigned
+cgwrap_is_usable (void)
+{
+  return cgwrap_dlhandle != NULL;
+}
+
 #else /* CGWRAP_ENABLE_DLOPEN */
 
 int
@@ -178,6 +187,13 @@ cgwrap_ensure_library (const char *soname, int flags)
 void
 cgwrap_unload_library (void)
 {
+}
+
+unsigned
+cgwrap_is_usable (void)
+{
+  /* The library is linked at build time, thus always usable */
+  return 1;
 }
 
 #endif /* !CGWRAP_ENABLE_DLOPEN */

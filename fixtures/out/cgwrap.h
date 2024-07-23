@@ -44,4 +44,11 @@ int cgwrap_ensure_library (const char *soname, int flags);
  */
 void cgwrap_unload_library (void);
 
+/* Return 1 if the library is loaded and usable.
+ *
+ * Note that this function is NOT thread-safe; when calling it from
+ * multi-threaded programs, protect it with a locking mechanism.
+ */
+unsigned cgwrap_is_usable (void);
+
 #endif /* CGWRAP_H_ */

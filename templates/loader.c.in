@@ -128,10 +128,13 @@ int
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-macros"
 
-#define FUNC(ret, name, args, cargs)	\
-  err = ENSURE_SYMBOL(name);		\
-  if (err < 0)				\
-    return err;
+#define FUNC(ret, name, args, cargs)		\
+  err = ENSURE_SYMBOL(name);			\
+  if (err < 0)					\
+    {						\
+      @LIBRARY_PREFIX@_dlhandle = NULL;		\
+      return err;				\
+    }
 #define VOID_FUNC FUNC
 #include "@FUNCTIONS_H@"
 #undef VOID_FUNC
@@ -165,6 +168,12 @@ void
 #pragma GCC diagnostic pop
 }
 
+unsigned
+@LIBRARY_PREFIX@_is_usable (void)
+{
+  return @LIBRARY_PREFIX@_dlhandle != NULL;
+}
+
 #else /* @ENABLE_DLOPEN@ */
 
 int
@@ -178,6 +187,13 @@ int
 void
 @LIBRARY_PREFIX@_unload_library (void)
 {
+}
+
+unsigned
+@LIBRARY_PREFIX@_is_usable (void)
+{
+  /* The library is linked at build time, thus always usable */
+  return 1;
 }
 
 #endif /* !@ENABLE_DLOPEN@ */

@@ -44,4 +44,11 @@ int array_ensure_library (const char *soname, int flags);
  */
 void array_unload_library (void);
 
+/* Return 1 if the library is loaded and usable.
+ *
+ * Note that this function is NOT thread-safe; when calling it from
+ * multi-threaded programs, protect it with a locking mechanism.
+ */
+unsigned array_is_usable (void);
+
 #endif /* ARRAY_H_ */

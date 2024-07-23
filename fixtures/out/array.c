@@ -128,10 +128,13 @@ array_ensure_library (const char *soname, int flags)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-macros"
 
-#define FUNC(ret, name, args, cargs)	\
-  err = ENSURE_SYMBOL(name);		\
-  if (err < 0)				\
-    return err;
+#define FUNC(ret, name, args, cargs)		\
+  err = ENSURE_SYMBOL(name);			\
+  if (err < 0)					\
+    {						\
+      array_dlhandle = NULL;		\
+      return err;				\
+    }
 #define VOID_FUNC FUNC
 #include "arrayfuncs.h"
 #undef VOID_FUNC
@@ -165,6 +168,12 @@ array_unload_library (void)
 #pragma GCC diagnostic pop
 }
 
+unsigned
+array_is_usable (void)
+{
+  return array_dlhandle != NULL;
+}
+
 #else /* ARRAY_ENABLE_DLOPEN */
 
 int
@@ -178,6 +187,13 @@ array_ensure_library (const char *soname, int flags)
 void
 array_unload_library (void)
 {
+}
+
+unsigned
+array_is_usable (void)
+{
+  /* The library is linked at build time, thus always usable */
+  return 1;
 }
 
 #endif /* !ARRAY_ENABLE_DLOPEN */
