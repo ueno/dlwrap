@@ -147,7 +147,10 @@ void
 cgwrap_unload_library (void)
 {
   if (cgwrap_dlhandle)
-    dlclose (cgwrap_dlhandle);
+    {
+      dlclose (cgwrap_dlhandle);
+      cgwrap_dlhandle = NULL;
+    }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-macros"
@@ -160,8 +163,6 @@ cgwrap_unload_library (void)
 #undef FUNC
 
 #pragma GCC diagnostic pop
-
-#undef RESET_SYMBOL
 }
 
 #else /* CGWRAP_ENABLE_DLOPEN */

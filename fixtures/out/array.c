@@ -147,7 +147,10 @@ void
 array_unload_library (void)
 {
   if (array_dlhandle)
-    dlclose (array_dlhandle);
+    {
+      dlclose (array_dlhandle);
+      array_dlhandle = NULL;
+    }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-macros"
@@ -160,8 +163,6 @@ array_unload_library (void)
 #undef FUNC
 
 #pragma GCC diagnostic pop
-
-#undef RESET_SYMBOL
 }
 
 #else /* ARRAY_ENABLE_DLOPEN */
