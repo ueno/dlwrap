@@ -3,4 +3,4 @@
  * which is covered by the following license:
  * TODO: INSERT LICENSE
  */
-FUNC(int, compress, (unsigned char buffer[], int size), (buffer, size))
+FUNC(int, compress, (unsigned char buffer[], size_t size), (buffer, size))

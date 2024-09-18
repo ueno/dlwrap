@@ -4,6 +4,7 @@ use anyhow::{anyhow, Result};
 use clang::*;
 use regex::{Captures, Regex};
 use std::env;
+use std::ffi::OsStr;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -286,6 +287,20 @@ impl Builder {
         let mut parser = index.parser(&self.input);
         if let Some(ref resource_dir) = self.clang_resource_dir {
             parser.arguments(&["-resource-dir", resource_dir.to_str().unwrap()]);
+        } else if let Some(cc) = clang_sys::support::Clang::find(None, Default::default()) {
+            if let Some(ref paths) = cc.c_search_paths {
+                let args: Result<Vec<&str>> = paths
+                    .iter()
+                    .map(|path| [OsStr::new("-isystem"), path.as_os_str()])
+                    .flatten()
+                    .map(|arg| {
+                        arg.to_str()
+                            .ok_or_else(|| anyhow::anyhow!("unable to convert path"))
+                    })
+                    .collect();
+                let args = args?;
+                parser.arguments(&args);
+            }
         }
         let tu = parser.parse()?;
         write!(
