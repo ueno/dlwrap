@@ -156,6 +156,7 @@ version = "0.3.5"
 dependencies = [
  "anyhow",
  "clang",
+ "clang-sys",
  "clap",
  "regex",
  "serial_test",
