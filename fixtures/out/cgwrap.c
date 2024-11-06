@@ -132,6 +132,7 @@ cgwrap_ensure_library (const char *soname, int flags)
   err = ENSURE_SYMBOL(name);			\
   if (err < 0)					\
     {						\
+      dlclose (cgwrap_dlhandle);	\
       cgwrap_dlhandle = NULL;		\
       return err;				\
     }

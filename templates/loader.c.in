@@ -132,6 +132,7 @@ int
   err = ENSURE_SYMBOL(name);			\
   if (err < 0)					\
     {						\
+      dlclose (@LIBRARY_PREFIX@_dlhandle);	\
       @LIBRARY_PREFIX@_dlhandle = NULL;		\
       return err;				\
     }

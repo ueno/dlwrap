@@ -132,6 +132,7 @@ array_ensure_library (const char *soname, int flags)
   err = ENSURE_SYMBOL(name);			\
   if (err < 0)					\
     {						\
+      dlclose (array_dlhandle);	\
       array_dlhandle = NULL;		\
       return err;				\
     }
