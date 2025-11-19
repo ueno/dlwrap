@@ -134,7 +134,7 @@ ZSTD_versionString: 1.5.6
 
 Apache-2.0
 
-The generated code can be distributed under FSFAP.
+The generated code can be distributed under Apache-2.0 OR FSFAP.
 
 [use-case-compression]: https://gitlab.com/gnutls/gnutls/-/issues/1424
 [use-case-cryptography]: https://github.com/open-quantum-safe/liboqs/pull/1603
