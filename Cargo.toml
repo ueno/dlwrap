@@ -18,6 +18,9 @@ regex = "1"
 serial_test = "3"
 tempfile = "3"
 
+[features]
+clang-runtime = ["clang/runtime", "clang-sys/runtime"]
+
 [[bin]]
 name = "dlwrap"
 path = "src/main.rs"
